@@ -2642,8 +2642,7 @@ namespace PoolWatcher
 
   static void PrintDonateWallets()
   {
-   Console.WriteLine("BTC     36jHQJ8nsbaZ7KW8trkej74T1aj1PV6XH5");
-   Console.WriteLine("VDS     VcjekyD4XAdfNx6wP1jiKRgL1ygrUe5NkYF");
+   Console.WriteLine("BTC     bc1q2dpwy93qmmnq4utuu8ypmj3kqykm43p4wg5gpt");
   }
 
   [SecurityCritical]
