@@ -19,7 +19,7 @@ Warning: the mode of intercepting messages from the SRB-miner requires enabling 
 
 When starting batch files, the monitoring of the following processes is turned off: "OhGodAnETHlargementPill-r2.exe", "sleep", "timeout""MSIAfterburner.exe", "curl", "tasklist", "find", "powershell", "start", "cd" and "taskkill"
 
-Watcher version: 1.1.672.0
+Watcher version: 1.1.671.0
 
 To complete mining, use the closure of the main window with a cross, call "Ctrl+C" or function "End the process tree" in "Task Manager"!
 
