@@ -22,11 +22,12 @@ It program for the mining pools monitoring and mining support.
 -v : Ban-time for the pool (minutes), default 30 minutes
 
 -m : Behavior upon occurrence of an event "For a long time there is no shares"; variants: 0 (ban) or 1 (miner restart), by default 1
+
+# Additional info:
 Example: PoolWatcher.exe -k 0 -w 1 -s 0 -o 1 -e 1 -d -p 120 -i 1 -v 30 -m 1
 
 Warning: the mode of intercepting messages from the SRB-miner requires enabling multi-window mode, do it with next option: '-w 0'
 
-# Additional info:
 When starting batch files, the monitoring of the following processes is turned off: "OhGodAnETHlargementPill-r2.exe", "sleep", "timeout""MSIAfterburner.exe", "curl", "tasklist", "find", "powershell", "start", "cd" and "taskkill"
 
 To complete mining, use the closure of the main window with a cross, call "Ctrl+C" or function "End the process tree" in "Task Manager"!
