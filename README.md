@@ -31,5 +31,8 @@ When starting batch files, the monitoring of the following processes is turned o
 
 To complete mining, use the closure of the main window with a cross, call "Ctrl+C" or function "End the process tree" in "Task Manager"!
 
+# System requirements:
+Windows 7-11 with .NET Framework 4.5 and above
+
 # Donate wallets:
 BTC     -----     bc1q2dpwy93qmmnq4utuu8ypmj3kqykm43p4wg5gpt
