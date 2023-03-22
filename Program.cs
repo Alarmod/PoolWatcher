@@ -2388,6 +2388,14 @@ namespace PoolWatcher
 
     criticalEvent(sendingProcess);
    }
+   else if (message.Contains("Duplicate share submitted")) // Rigel bug
+   {
+    Console.ForegroundColor = ConsoleColor.Magenta;
+    Console.WriteLine(message);
+    Console.ForegroundColor = ConsoleColor.White;
+
+    criticalEvent(sendingProcess);
+   }
    else if (message.Contains("DNS error: \"temporary failure\"") || message.Contains("DNS error: \"unknown node or service\"")) // глобальная ошибка DNS, скорее всего ничего не будет добаваться ничем
    {
     Console.ForegroundColor = ConsoleColor.Magenta;
