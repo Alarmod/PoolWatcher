@@ -106,6 +106,8 @@ namespace PoolWatcher
 
  class Options
  {
+  public const int default_wait_timeout_value = 360;
+
   [Option('k', "kill_pill", Default = 0, Required = false)]
   public int kill_pill { get; set; }
 
@@ -124,7 +126,7 @@ namespace PoolWatcher
   [Option('d', "use_dummy_miner", Default = 0, Required = false)]
   public int use_dummy_miner { get; set; }
 
-  [Option('p', "wait_timeout", Default = 120, Required = false)]
+  [Option('p', "wait_timeout", Default = default_wait_timeout_value, Required = false)]
   public int wait_timeout { get; set; }
 
   [Option('i', "ignore_no_active_pools_message", Default = 1, Required = false)]
@@ -2396,6 +2398,14 @@ namespace PoolWatcher
 
     criticalEvent(sendingProcess);
    }
+   else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero bug
+   {
+    Console.ForegroundColor = ConsoleColor.Magenta;
+    Console.WriteLine(message);
+    Console.ForegroundColor = ConsoleColor.White;
+
+    criticalEvent(sendingProcess);
+   }
    else if (message.Contains("DNS error: \"temporary failure\"") || message.Contains("DNS error: \"unknown node or service\"")) // глобальная ошибка DNS, скорее всего ничего не будет добаваться ничем
    {
     Console.ForegroundColor = ConsoleColor.Magenta;
@@ -2575,12 +2585,12 @@ namespace PoolWatcher
     Console.WriteLine("-o : Прямой порядок завершения процесса добычи; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-e : Завершить работу внутреннего цикла после поломки майнера; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-d : Использование dummy-майнера (с именем dummy.exe), по умолчанию запускается с параметрами '" + default_dummy_params + "', если иное не указано в пятой строчке конфигурационного файла; значения: 0 или 1, по умолчанию 0");
-    Console.WriteLine("-p : Базовый период ожидания запуска майнера в бат-файле, по умолчанию 120 секунд");
+    Console.WriteLine("-p : Базовый период ожидания запуска майнера в бат-файле, по умолчанию " + Options.default_wait_timeout_value + " секунд");
     Console.WriteLine("-i : Игнорировать сообщения вида 'no active pools'; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-v : Время бана пула (минут); значения: по умолчанию 30 минут");
     Console.WriteLine("-m : Поведение при наступлении события \"долгое время нет шар\"; значения: 0 (бан) или 1 (рестарт майнера), по умолчанию 1");
 
-    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d 1 -p 120 -i 1 -v 30 -m 1");
+    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d 1 -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
    else
    {
@@ -2592,12 +2602,12 @@ namespace PoolWatcher
     Console.WriteLine("-o : Direct procedure for completing the mining process; variants: 0 or 1, default 1");
     Console.WriteLine("-e : Quit internal cycle after miner crash; variants: 0 or 1, default 1");
     Console.WriteLine("-d : Using a dummy-miner (named as dummy.exe), by default it starts with parameters '" + default_dummy_params + "', unless otherwise specified in the fifth line of the configuration file; variants: 0 or 1, default 0");
-    Console.WriteLine("-p : Base waiting period for the launch of the miner in the bat-file, default 120 seconds");
+    Console.WriteLine("-p : Base waiting period for the launch of the miner in the bat-file, default " + Options.default_wait_timeout_value + " seconds");
     Console.WriteLine("-i : Ignore messages like 'no active pools'; variants: 0 or 1, default 1");
     Console.WriteLine("-v : Ban-time for the pool (minutes), default 30 minutes");
     Console.WriteLine("-m : Behavior upon occurrence of an event \"For a long time there is no shares\"; variants: 0 (ban) or 1 (miner restart), by default 1");
 
-    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d -p 120 -i 1 -v 30 -m 1");
+    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
    Console.WriteLine();
 
