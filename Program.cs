@@ -107,6 +107,7 @@ namespace PoolWatcher
  class Options
  {
   public const int default_wait_timeout_value = 360;
+  public const int default_sleep_timeout = 90000;
 
   [Option('k', "kill_pill", Default = 0, Required = false)]
   public int kill_pill { get; set; }
@@ -1488,7 +1489,18 @@ namespace PoolWatcher
    {
     evt.WaitOne();
 
-    Thread.Sleep(sleep_timeout);
+    for (int i = 0; i < 5; i++)
+    {
+     Thread.Sleep(sleep_timeout / 5);
+
+     if (slaveMinerProcess0 != null || slaveMinerProcess1 != null || masterMinerProcess != null)
+     {
+      if (slaveMinerProcess0 != null) if (slaveMinerProcess0.HasExited) { Console.Write("Fast exit"); break; }
+      if (slaveMinerProcess1 != null) if (slaveMinerProcess1.HasExited) { Console.Write("Fast exit"); break; }
+      if (masterMinerProcess != null) if (masterMinerProcess.HasExited) { Console.Write("Fast exit"); break; }
+     }
+     else { Console.Write("Fast exit"); break; }
+    }
 
     evt_main.Set();
    }
@@ -3031,6 +3043,11 @@ namespace PoolWatcher
         {
          if (!slaveMinerProcess0.Responding)
          {
+          if (Program.ru_lang)
+           Console.WriteLine("Процесс '" + exe_lines[1] + "' перестал отвечать, ждем до 25 секунд и завершаем текущий цикл");
+          else
+           Console.WriteLine("The process '" + exe_lines[1] + "' has stopped answering, we are waiting for up to 25 seconds and we complete the current cycle");
+
           UInt64 cur_slave0MinerProcessCounter = slave0MinerProcessCounter;
 
           for (int _t_temp = 0; _t_temp < 50; _t_temp++)
@@ -3060,6 +3077,11 @@ namespace PoolWatcher
         {
          if (!slaveMinerProcess1.Responding)
          {
+          if (Program.ru_lang)
+           Console.WriteLine("Процесс '" + exe_lines[2] + "' перестал отвечать, ждем до 25 секунд и завершаем текущий цикл");
+          else
+           Console.WriteLine("The process '" + exe_lines[2] + "' has stopped answering, we are waiting for up to 25 seconds and we complete the current cycle");
+
           UInt64 cur_slave1MinerProcessCounter = slave1MinerProcessCounter;
 
           for (int _t_temp = 0; _t_temp < 50; _t_temp++)
@@ -3086,7 +3108,7 @@ namespace PoolWatcher
 
       if (miners_killed == false && main_cycle_enabled)
       {
-       sleep_timeout = 90000;
+       sleep_timeout = Options.default_sleep_timeout;
        evt.Set();
        evt_main.WaitOne();
       }
@@ -3307,6 +3329,11 @@ namespace PoolWatcher
          {
           if (!masterMinerProcess.Responding)
           {
+           if (Program.ru_lang)
+            Console.WriteLine("Процесс '" + exe_lines[0] + "' перестал отвечать, ждем до 25 секунд и завершаем текущий цикл");
+           else
+            Console.WriteLine("The process '" + exe_lines[0] + "' has stopped answering, we are waiting for up to 25 seconds and we complete the current cycle");
+
            UInt64 cur_masterMinerProcessCounter = masterMinerProcessCounter;
 
            for (int _t_temp = 0; _t_temp < 50; _t_temp++)
@@ -3333,7 +3360,7 @@ namespace PoolWatcher
 
        if (miners_killed == false && main_cycle_enabled)
        {
-        sleep_timeout = 90000;
+        sleep_timeout = Options.default_sleep_timeout;
         evt.Set();
         evt_main.WaitOne();
        }
