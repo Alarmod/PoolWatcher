@@ -16,6 +16,7 @@ using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -159,6 +160,8 @@ namespace PoolWatcher
  public static class Program
  {
   static readonly int sleep_default_timeout = 500; // базовая единица ожидания
+
+  static volatile Object _lockObj = new Object();
 
   // Основная монета
   static readonly string defaultPool = "vds.666pool.cn";
@@ -1520,23 +1523,26 @@ namespace PoolWatcher
   [SecurityCritical]
   static void BanWaitBody(Task t)
   {
-   Console.WriteLine($"Выполняется бан-задача с идентификатором '{Task.CurrentId}'");
+   lock (_lockObj)
+   {
+    Console.WriteLine($"Выполняется бан-задача с идентификатором '{Task.CurrentId}'");
 
-   waitAfterBan = true;
+    waitAfterBan = true;
 
-   Console.ForegroundColor = ConsoleColor.Magenta;
-   Console.WriteLine("Run pool ban: {0} minutes", options.ban_timeout);
-   Console.ForegroundColor = ConsoleColor.White;
+    Console.ForegroundColor = ConsoleColor.Magenta;
+    Console.WriteLine("Run pool ban: {0} minutes", options.ban_timeout);
+    Console.ForegroundColor = ConsoleColor.White;
 
-   Thread.Sleep(options.ban_timeout * 60 * 1000); // ждём завершения бана
+    Thread.Sleep(options.ban_timeout * 60 * 1000); // ждём завершения бана
 
-   Console.ForegroundColor = ConsoleColor.Magenta;
-   Console.WriteLine("Pool ban completed");
-   Console.ForegroundColor = ConsoleColor.White;
+    Console.ForegroundColor = ConsoleColor.Magenta;
+    Console.WriteLine("Pool ban completed");
+    Console.ForegroundColor = ConsoleColor.White;
 
-   start_task = t;
+    start_task = t;
 
-   waitAfterBan = false;
+    waitAfterBan = false;
+   }
   }
 
   [SecurityCritical]
@@ -2239,344 +2245,354 @@ namespace PoolWatcher
   [SecurityCritical]
   static void criticalEvent(object sendingProcess)
   {
-   try
+   lock (_lockObj)
    {
-    if (sendingProcess != null)
+    try
     {
-     Process pr = (Process)sendingProcess;
-     int pid = pr.Id;
-
-     Console.ForegroundColor = ConsoleColor.Magenta;
-     if (Program.ru_lang)
-      Console.WriteLine("Принудительный перезапуск добычи");
-     else
-      Console.WriteLine("Forced miner restart");
-
-     Console.ForegroundColor = ConsoleColor.White;
-
-     if (options.direct_order == 1)
+     if (sendingProcess != null)
      {
-      Process killProcess = new Process();
-      killProcess.StartInfo.UseShellExecute = false;
-      killProcess.StartInfo.FileName = "wmic";
-      killProcess.StartInfo.CreateNoWindow = true;
-      killProcess.StartInfo.ErrorDialog = false;
+      Process pr = (Process)sendingProcess;
+      int pid = pr.Id;
 
-      killProcess.StartInfo.Arguments = "process where (processid=\"" + pid + "\" and parentprocessid=\"" + Process.GetCurrentProcess().Id + "\") call terminate";
+      Console.ForegroundColor = ConsoleColor.Magenta;
+      if (Program.ru_lang)
+       Console.WriteLine("Принудительный перезапуск добычи");
+      else
+       Console.WriteLine("Forced miner restart");
+      Console.ForegroundColor = ConsoleColor.White;
 
-      killProcess.Start();
-      killProcess.WaitForExit();
-      killProcess.Close();
-      killProcess.Dispose();
-      killProcess = null;
-
-      if (slaveMinerProcess0 != null)
+      if (options.direct_order == 1)
       {
-       if (slaveMinerProcess0.Id == pid)
-        KillAllProcessesSpawnedBy(slaveMinerProcess0StartTime, (uint)pid, slaveMinerProcess0DeathTime);
+       Process killProcess = new Process();
+       killProcess.StartInfo.UseShellExecute = false;
+       killProcess.StartInfo.FileName = "wmic";
+       killProcess.StartInfo.CreateNoWindow = true;
+       killProcess.StartInfo.ErrorDialog = false;
+
+       killProcess.StartInfo.Arguments = "process where (processid=\"" + pid + "\" and parentprocessid=\"" + Process.GetCurrentProcess().Id + "\") call terminate";
+
+       killProcess.Start();
+       killProcess.WaitForExit();
+       killProcess.Close();
+       killProcess.Dispose();
+       killProcess = null;
+
+       if (slaveMinerProcess0 != null)
+       {
+        if (slaveMinerProcess0.Id == pid)
+         KillAllProcessesSpawnedBy(slaveMinerProcess0StartTime, (uint)pid, slaveMinerProcess0DeathTime);
+       }
+
+       if (slaveMinerProcess1 != null)
+       {
+        if (slaveMinerProcess1.Id == pid)
+         KillAllProcessesSpawnedBy(slaveMinerProcess1StartTime, (uint)pid, slaveMinerProcess1DeathTime);
+       }
+
+       if (masterMinerProcess != null)
+       {
+        if (masterMinerProcess.Id == pid)
+         KillAllProcessesSpawnedBy(masterMinerProcessStartTime, (uint)pid, masterMinerProcessDeathTime);
+       }
+      }
+      else
+      {
+       if (slaveMinerProcess0 != null)
+       {
+        if (slaveMinerProcess0.Id == pid)
+         KillAllProcessesSpawnedBy(slaveMinerProcess0StartTime, (uint)pid, slaveMinerProcess0DeathTime);
+       }
+
+       if (slaveMinerProcess1 != null)
+       {
+        if (slaveMinerProcess1.Id == pid)
+         KillAllProcessesSpawnedBy(slaveMinerProcess1StartTime, (uint)pid, slaveMinerProcess1DeathTime);
+       }
+
+       if (masterMinerProcess != null)
+       {
+        if (masterMinerProcess.Id == pid)
+         KillAllProcessesSpawnedBy(masterMinerProcessStartTime, (uint)pid, masterMinerProcessDeathTime);
+       }
+
+       Process killProcess = new Process();
+       killProcess.StartInfo.UseShellExecute = false;
+       killProcess.StartInfo.FileName = "wmic";
+       killProcess.StartInfo.CreateNoWindow = true;
+       killProcess.StartInfo.ErrorDialog = false;
+
+       killProcess.StartInfo.Arguments = "process where (processid=\"" + pid + "\" and parentprocessid=\"" + Process.GetCurrentProcess().Id + "\") call terminate";
+
+       killProcess.Start();
+       killProcess.WaitForExit();
+       killProcess.Close();
+       killProcess.Dispose();
+       killProcess = null;
       }
 
-      if (slaveMinerProcess1 != null)
-      {
-       if (slaveMinerProcess1.Id == pid)
-        KillAllProcessesSpawnedBy(slaveMinerProcess1StartTime, (uint)pid, slaveMinerProcess1DeathTime);
-      }
+      if (pr != null) pr.WaitForExit();
 
-      if (masterMinerProcess != null)
-      {
-       if (masterMinerProcess.Id == pid)
-        KillAllProcessesSpawnedBy(masterMinerProcessStartTime, (uint)pid, masterMinerProcessDeathTime);
-      }
+      GC.Collect();
      }
      else
      {
-      if (slaveMinerProcess0 != null)
-      {
-       if (slaveMinerProcess0.Id == pid)
-        KillAllProcessesSpawnedBy(slaveMinerProcess0StartTime, (uint)pid, slaveMinerProcess0DeathTime);
-      }
+      Console.ForegroundColor = ConsoleColor.Magenta;
+      if (Program.ru_lang)
+       Console.WriteLine("Принудительный перезапуск добычи");
+      else
+       Console.WriteLine("Forced miner restart");
+      Console.ForegroundColor = ConsoleColor.White;
 
-      if (slaveMinerProcess1 != null)
-      {
-       if (slaveMinerProcess1.Id == pid)
-        KillAllProcessesSpawnedBy(slaveMinerProcess1StartTime, (uint)pid, slaveMinerProcess1DeathTime);
-      }
+      if (slaveMinerProcess0Id != -1)
+       KillAllProcessesSpawnedBy(slaveMinerProcess0StartTime, (uint)slaveMinerProcess0Id, slaveMinerProcess0DeathTime);
 
-      if (masterMinerProcess != null)
-      {
-       if (masterMinerProcess.Id == pid)
-        KillAllProcessesSpawnedBy(masterMinerProcessStartTime, (uint)pid, masterMinerProcessDeathTime);
-      }
+      if (slaveMinerProcess1Id != -1)
+       KillAllProcessesSpawnedBy(slaveMinerProcess1StartTime, (uint)slaveMinerProcess1Id, slaveMinerProcess1DeathTime);
 
-      Process killProcess = new Process();
-      killProcess.StartInfo.UseShellExecute = false;
-      killProcess.StartInfo.FileName = "wmic";
-      killProcess.StartInfo.CreateNoWindow = true;
-      killProcess.StartInfo.ErrorDialog = false;
-
-      killProcess.StartInfo.Arguments = "process where (processid=\"" + pid + "\" and parentprocessid=\"" + Process.GetCurrentProcess().Id + "\") call terminate";
-
-      killProcess.Start();
-      killProcess.WaitForExit();
-      killProcess.Close();
-      killProcess.Dispose();
-      killProcess = null;
+      if (masterMinerProcessId != -1)
+       KillAllProcessesSpawnedBy(masterMinerProcessStartTime, (uint)masterMinerProcessId, masterMinerProcessDeathTime);
      }
-
-     if (pr != null) pr.WaitForExit();
-
-     GC.Collect();
     }
-    else
-    {
-     Console.ForegroundColor = ConsoleColor.Magenta;
-     if (Program.ru_lang)
-      Console.WriteLine("Принудительный перезапуск добычи");
-     else
-      Console.WriteLine("Forced miner restart");
-
-     Console.ForegroundColor = ConsoleColor.White;
-
-     if (slaveMinerProcess0Id != -1)
-      KillAllProcessesSpawnedBy(slaveMinerProcess0StartTime, (uint)slaveMinerProcess0Id, slaveMinerProcess0DeathTime);
-
-     if (slaveMinerProcess1Id != -1)
-      KillAllProcessesSpawnedBy(slaveMinerProcess1StartTime, (uint)slaveMinerProcess1Id, slaveMinerProcess1DeathTime);
-
-     if (masterMinerProcessId != -1)
-      KillAllProcessesSpawnedBy(masterMinerProcessStartTime, (uint)masterMinerProcessId, masterMinerProcessDeathTime);
-    }
+    catch { }
    }
-   catch { }
   }
 
   [SecurityCritical]
   static void ParseMessage(object sendingProcess, string message)
   {
-   message = message.Filter(new List<string>() { "Putin khuylo! " });
-
-   if (message.Contains("new job") || (message.Contains("diff") && !message.Contains("[B/A/T]") && !message.Contains("accepted")))
+   lock (_lockObj)
    {
-    Console.ForegroundColor = ConsoleColor.DarkCyan;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-   }
-   if (message.Contains("profit:"))
-   {
-    Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-   }
-   else if (message.Contains("Total Speed") || message.Contains("Total:"))
-   {
-    Console.ForegroundColor = ConsoleColor.DarkYellow;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-   }
-   else if (message.Contains("TCP Client"))
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    if (message.Contains("Receiving message timeout"))
+    // message filter
     {
+     message = new Regex(@"\x1B\[[^@-~]*[@-~]").Replace(message, String.Empty);
+     message = message.Filter(new List<string>() { "Putin khuylo! " });
+    }
+
+    if (message.Contains("new job") || (message.Contains("diff") && !message.Contains("[B/A/T]") && !message.Contains("accepted")))
+    {
+     Console.ForegroundColor = ConsoleColor.DarkCyan;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+    }
+    else if (message.Contains("profit:"))
+    {
+     Console.ForegroundColor = ConsoleColor.Red;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+    }
+    else if (message.Contains("Total Speed") || message.Contains("Total:"))
+    {
+     Console.ForegroundColor = ConsoleColor.DarkYellow;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+    }
+    else if (message.Contains("TCP Client"))
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     if (message.Contains("Receiving message timeout"))
+     {
+      criticalEvent(sendingProcess);
+
+      Thread.Sleep(10000);
+     }
+    } // xmrig and NIM
+    else if ((message.Contains("speed 10s/60s/15m 0.0 0.0") || message.Contains("speed 10s/60s/15m 0 0")) || message.Contains("GPU#0 0 H/s") || message.Contains("GPU#1 0 H/s") || message.Contains("GPU#2 0 H/s") || message.Contains("GPU#3 0 H/s") || message.Contains("GPU#4 0 H/s") || message.Contains("GPU#5 0 H/s") || message.Contains("GPU#6 0 H/s") || message.Contains("GPU#7 0 H/s") || message.Contains("GPU#8 0 H/s") || message.Contains("GPU#9 0 H/s"))
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
      criticalEvent(sendingProcess);
+    }
+    else if (options.ignore_no_active_pools_message == 0 && message.Contains("no active pools, stop mining"))
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     criticalEvent(sendingProcess);
+    }
+    else if (message.Contains("Duplicate share submitted")) // Rigel bug
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     criticalEvent(sendingProcess);
+    }
+    else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero bug
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     criticalEvent(sendingProcess);
+    }
+    else if (message.Contains("DNS error: \"temporary failure\"") || message.Contains("DNS error: \"unknown node or service\"")) // глобальная ошибка DNS, скорее всего ничего не будет добаваться ничем
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
 
      Thread.Sleep(10000);
     }
-   } // xmrig and NIM
-   else if ((message.Contains("speed 10s/60s/15m 0.0 0.0") || message.Contains("speed 10s/60s/15m 0 0")) || message.Contains("GPU#0 0 H/s") || message.Contains("GPU#1 0 H/s") || message.Contains("GPU#2 0 H/s") || message.Contains("GPU#3 0 H/s") || message.Contains("GPU#4 0 H/s") || message.Contains("GPU#5 0 H/s") || message.Contains("GPU#6 0 H/s") || message.Contains("GPU#7 0 H/s") || message.Contains("GPU#8 0 H/s") || message.Contains("GPU#9 0 H/s"))
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    criticalEvent(sendingProcess);
-   }
-   else if (options.ignore_no_active_pools_message == 0 && message.Contains("no active pools, stop mining"))
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    criticalEvent(sendingProcess);
-   }
-   else if (message.Contains("Duplicate share submitted")) // Rigel bug
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    criticalEvent(sendingProcess);
-   }
-   else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero bug
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    criticalEvent(sendingProcess);
-   }
-   else if (message.Contains("DNS error: \"temporary failure\"") || message.Contains("DNS error: \"unknown node or service\"")) // глобальная ошибка DNS, скорее всего ничего не будет добаваться ничем
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    Thread.Sleep(10000);
-   }
-   else if (mainThread_enabled && (message.Contains("Invalid wallet address") || message.Contains("Connection Error:") || message.Contains("THREAD #0 COMPUTE ERROR") || message.Contains("connect error: \"connection refused\""))) // Основная монета
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    lock (timeOfLatestBan_SyncObject)
+    else if (mainThread_enabled && (message.Contains("Invalid wallet address") || message.Contains("Connection Error:") || message.Contains("THREAD #0 COMPUTE ERROR") || message.Contains("connect error: \"connection refused\""))) // Основная монета
     {
-     if (timeOfLatestBan == null)
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     lock (timeOfLatestBan_SyncObject)
      {
-      timeOfLatestBan = (object)DateTime.Now;
-
-      runBan();
-
-      criticalEvent(sendingProcess);
-     }
-     else
-     {
-      DateTime last_event = (DateTime)timeOfLatestBan;
-      DateTime now_event = DateTime.Now;
-
-      if ((now_event - last_event).TotalSeconds < 30)
+      if (timeOfLatestBan == null)
       {
-       Console.ForegroundColor = ConsoleColor.Magenta;
-       Console.WriteLine("Слишком быстро пытаемся выдать новый бан, игнор");
-       Console.ForegroundColor = ConsoleColor.White;
-      }
-      else
-      {
-       timeOfLatestBan = (object)now_event;
+       timeOfLatestBan = (object)DateTime.Now;
 
        runBan();
 
        criticalEvent(sendingProcess);
       }
-     }
-    }
-   }
-   else if (message.Contains("First switch to dev pool. First time is based on a random threshold"))
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    criticalEvent(sendingProcess);
-   }
-   else if (message.Contains("OFFLINE") || message.Contains("Existing CudaSolver or OclSolver processes running"))
-   {
-    Console.ForegroundColor = ConsoleColor.Magenta;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    criticalEvent(sendingProcess);
-   }
-   else if (message.Contains("Stratum: No shares") || message.ToLower(CultureInfo.CurrentCulture).Contains("reconnect"))
-   {
-    Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-   } // xmrig and wildrig   
-   else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")))
-   {
-    if (mainThread_enabled)
-    {
-     lock (timeOfLatestAccepted_SyncObject)
-     {
-      DateTime last_event_cache = ((timeOfLatestAccepted == null) ? DateTime.Now : (DateTime)timeOfLatestAccepted);
-      DateTime now_event = DateTime.Now;
-
-      double span = (now_event - last_event_cache).TotalSeconds;
-      if (span > ((int)acceptedTimeOut))
+      else
       {
-       if (options.ban_or_restart_no_shares_event == 0)
+       DateTime last_event = (DateTime)timeOfLatestBan;
+       DateTime now_event = DateTime.Now;
+
+       if ((now_event - last_event).TotalSeconds < 30)
        {
         Console.ForegroundColor = ConsoleColor.Magenta;
-        Console.WriteLine("Слишком долго нет ни одной принятой шары, пул идёт в бан");
+        Console.WriteLine("Слишком быстро пытаемся выдать новый бан, игнор");
         Console.ForegroundColor = ConsoleColor.White;
+       }
+       else
+       {
+        timeOfLatestBan = (object)now_event;
 
-        lock (timeOfLatestBan_SyncObject)
+        runBan();
+
+        criticalEvent(sendingProcess);
+       }
+      }
+     }
+    }
+    else if (message.Contains("First switch to dev pool. First time is based on a random threshold"))
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     criticalEvent(sendingProcess);
+    }
+    else if (message.Contains("OFFLINE") || message.Contains("Existing CudaSolver or OclSolver processes running"))
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     criticalEvent(sendingProcess);
+    }
+    else if (message.Contains("Stratum: No shares") || message.ToLower(CultureInfo.CurrentCulture).Contains("reconnect"))
+    {
+     Console.ForegroundColor = ConsoleColor.Red;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+    } // xmrig and wildrig   
+    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")))
+    {
+     if (mainThread_enabled)
+     {
+      lock (timeOfLatestAccepted_SyncObject)
+      {
+       DateTime last_event_cache = ((timeOfLatestAccepted == null) ? DateTime.Now : (DateTime)timeOfLatestAccepted);
+       DateTime now_event = DateTime.Now;
+
+       double span = (now_event - last_event_cache).TotalSeconds;
+       if (span > ((int)acceptedTimeOut))
+       {
+        if (options.ban_or_restart_no_shares_event == 0)
         {
-         if (timeOfLatestBan == null)
+         Console.ForegroundColor = ConsoleColor.Magenta;
+         Console.WriteLine("Слишком долго нет ни одной принятой шары, пул идёт в бан");
+         Console.ForegroundColor = ConsoleColor.White;
+
+         lock (timeOfLatestBan_SyncObject)
          {
-          timeOfLatestBan = (object)DateTime.Now;
-
-          runBan();
-
-          criticalEvent(sendingProcess);
-         }
-         else
-         {
-          DateTime last_event = (DateTime)timeOfLatestBan;
-
-          if ((now_event - last_event).TotalSeconds < 30)
+          if (timeOfLatestBan == null)
           {
-           Console.ForegroundColor = ConsoleColor.Magenta;
-           Console.WriteLine("Слишком быстро пытаемся выдать новый бан, игнор");
-           Console.ForegroundColor = ConsoleColor.White;
-          }
-          else
-          {
-           timeOfLatestBan = (object)now_event;
+           timeOfLatestBan = (object)DateTime.Now;
 
            runBan();
 
            criticalEvent(sendingProcess);
           }
+          else
+          {
+           DateTime last_event = (DateTime)timeOfLatestBan;
+
+           if ((now_event - last_event).TotalSeconds < 30)
+           {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("Слишком быстро пытаемся выдать новый бан, игнор");
+            Console.ForegroundColor = ConsoleColor.White;
+           }
+           else
+           {
+            timeOfLatestBan = (object)now_event;
+
+            runBan();
+
+            criticalEvent(sendingProcess);
+           }
+          }
          }
+        }
+        else
+        {
+         Console.ForegroundColor = ConsoleColor.Magenta;
+         Console.WriteLine("Слишком долго нет ни одной принятой шары, перезапускаем майнер");
+         Console.ForegroundColor = ConsoleColor.White;
+
+         criticalEvent(sendingProcess);
         }
        }
        else
        {
-        Console.ForegroundColor = ConsoleColor.Magenta;
-        Console.WriteLine("Слишком долго нет ни одной принятой шары, перезапускаем майнер");
-        Console.ForegroundColor = ConsoleColor.White;
-
-        criticalEvent(sendingProcess);
+        if (message.Contains("15m:") && message.Contains("Ignored:"))
+         Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
+        else
+         Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
        }
       }
-      else
+     }
+     else
+     {
+      Console.ForegroundColor = ConsoleColor.White;
+      Console.WriteLine(message);
+     }
+    } // Проверка на "Accepted:" добавлена для работы с новым wildrig
+    else if ((message.ToLower(CultureInfo.CurrentCulture).Contains("accepted") && !message.Contains("Accepted:")) || message.Contains("[ OK ]") || message.Contains("[ BLOCK ]") || (message.Contains("diff") && message.Contains("[B/A/T]")))
+    {
+     Console.ForegroundColor = ConsoleColor.DarkGreen;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     if (mainThread_enabled)
+     {
+      lock (timeOfLatestAccepted_SyncObject)
       {
-       if (message.Contains("15m:") && message.Contains("Ignored:"))
-        Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
-       else
-        Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
+       acceptedTimeOut = (object)(options.wait_timeout);
+
+       timeOfLatestAccepted = (object)DateTime.Now;
       }
      }
     }
     else
     {
+     Console.ForegroundColor = ConsoleColor.White;
      Console.WriteLine(message);
     }
-   } // Проверка на "Accepted:" добавлена для работы с новым wildrig
-   else if ((message.ToLower(CultureInfo.CurrentCulture).Contains("accepted") && !message.Contains("Accepted:")) || message.Contains("[ OK ]") || message.Contains("[ BLOCK ]") || (message.Contains("diff") && message.Contains("[B/A/T]")))
-   {
-    Console.ForegroundColor = ConsoleColor.DarkGreen;
-    Console.WriteLine(message);
-    Console.ForegroundColor = ConsoleColor.White;
-
-    if (mainThread_enabled)
-    {
-     lock (timeOfLatestAccepted_SyncObject)
-     {
-      acceptedTimeOut = (object)(options.wait_timeout);
-
-      timeOfLatestAccepted = (object)DateTime.Now;
-     }
-    }
-   }
-   else
-   {
-    Console.WriteLine(message);
    }
   }
 
@@ -2600,7 +2616,7 @@ namespace PoolWatcher
     Console.WriteLine("-p : Базовый период ожидания запуска майнера в бат-файле, по умолчанию " + Options.default_wait_timeout_value + " секунд");
     Console.WriteLine("-i : Игнорировать сообщения вида 'no active pools'; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-v : Время бана пула (минут); значения: по умолчанию 30 минут");
-    Console.WriteLine("-m : Поведение при наступлении события \"долгое время нет шар\"; значения: 0 (бан) или 1 (рестарт майнера), по умолчанию 1");
+    Console.WriteLine("-m : Поведение при наступлении события \"долгое время нет шар\"; значения: 0 (бан) или 1 (рестарт майнера), по умолчанию 1" + Environment.NewLine + Environment.NewLine);
 
     Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d 1 -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
@@ -2617,7 +2633,7 @@ namespace PoolWatcher
     Console.WriteLine("-p : Base waiting period for the launch of the miner in the bat-file, default " + Options.default_wait_timeout_value + " seconds");
     Console.WriteLine("-i : Ignore messages like 'no active pools'; variants: 0 or 1, default 1");
     Console.WriteLine("-v : Ban-time for the pool (minutes), default 30 minutes");
-    Console.WriteLine("-m : Behavior upon occurrence of an event \"For a long time there is no shares\"; variants: 0 (ban) or 1 (miner restart), by default 1");
+    Console.WriteLine("-m : Behavior upon occurrence of an event \"For a long time there is no shares\"; variants: 0 (ban) or 1 (miner restart), by default 1" + Environment.NewLine + Environment.NewLine);
 
     Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
