@@ -1498,11 +1498,11 @@ namespace PoolWatcher
 
      if (slaveMinerProcess0 != null || slaveMinerProcess1 != null || masterMinerProcess != null)
      {
-      if (slaveMinerProcess0 != null) if (slaveMinerProcess0.HasExited) { Console.Write("Fast exit"); break; }
-      if (slaveMinerProcess1 != null) if (slaveMinerProcess1.HasExited) { Console.Write("Fast exit"); break; }
-      if (masterMinerProcess != null) if (masterMinerProcess.HasExited) { Console.Write("Fast exit"); break; }
+      if (slaveMinerProcess0 != null) if (slaveMinerProcess0.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
+      if (slaveMinerProcess1 != null) if (slaveMinerProcess1.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
+      if (masterMinerProcess != null) if (masterMinerProcess.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
      }
-     else { Console.Write("Fast exit"); break; }
+     else { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
     }
 
     evt_main.Set();
@@ -2362,9 +2362,11 @@ namespace PoolWatcher
   {
    lock (_lockObj)
    {
+    // HTML codes cleaner
+    message = new Regex(@"\x1B\[[^@-~]*[@-~]").Replace(message, String.Empty);
+
     // message filter
     {
-     message = new Regex(@"\x1B\[[^@-~]*[@-~]").Replace(message, String.Empty);
      message = message.Filter(new List<string>() { "Putin khuylo! " });
     }
 
@@ -2415,6 +2417,7 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
+/*
     else if (message.Contains("Duplicate share submitted")) // Rigel bug
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
@@ -2423,7 +2426,16 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-    else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero bug
+    else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero bug (DNX)
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     criticalEvent(sendingProcess);
+    }
+*/
+    else if (message.Contains("PL0: [FAILED]")) // SRBMiner-Multi bug
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
@@ -2652,16 +2664,6 @@ namespace PoolWatcher
    else if (options.ignore_no_active_pools_message < 0 || options.ignore_no_active_pools_message > 1) badSettings = true;
    else if (options.ban_timeout < 0 || options.ban_timeout > 1000000) badSettings = true;
    else if (options.ban_or_restart_no_shares_event < 0 || options.ban_or_restart_no_shares_event > 1) badSettings = true;
-
-   if (options.without_external_windows == 1)
-   {
-    if (Program.ru_lang)
-     Console.WriteLine("Предупреждение: режим перехвата сообщений от SRB-майнера требует запуска следилки в многооконном режиме, то есть с ключем '-w 0'");
-    else
-     Console.WriteLine("Warning: the mode of intercepting messages from the SRB-miner requires enabling multi-window mode, do it with next option: '-w 0'");
-
-    Console.WriteLine();
-   }
 
    if (Program.ru_lang)
     Console.WriteLine("При запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"");
