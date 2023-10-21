@@ -1502,7 +1502,7 @@ namespace PoolWatcher
       if (slaveMinerProcess1 != null) if (slaveMinerProcess1.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
       if (masterMinerProcess != null) if (masterMinerProcess.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
      }
-     else { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
+     else { Console.WriteLine("Fast exit"); break; }
     }
 
     evt_main.Set();
@@ -2664,6 +2664,16 @@ namespace PoolWatcher
    else if (options.ignore_no_active_pools_message < 0 || options.ignore_no_active_pools_message > 1) badSettings = true;
    else if (options.ban_timeout < 0 || options.ban_timeout > 1000000) badSettings = true;
    else if (options.ban_or_restart_no_shares_event < 0 || options.ban_or_restart_no_shares_event > 1) badSettings = true;
+
+   if (options.without_external_windows == 1)
+   {
+    if (Program.ru_lang)
+     Console.WriteLine("Предупреждение: режим перехвата сообщений от SRB-майнера требует запуска следилки в многооконном режиме, то есть с ключем '-w 0', иначе может быть задержка с выводом лога в консоль");
+    else
+     Console.WriteLine("Warning: the mode of intercepting messages from the SRB-miner requires enabling multi-window mode, do it with next option: '-w 0', otherwise there may be a delay with the output of the log into the console");
+
+    Console.WriteLine();
+   }
 
    if (Program.ru_lang)
     Console.WriteLine("При запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"");
