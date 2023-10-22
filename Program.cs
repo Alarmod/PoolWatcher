@@ -2469,7 +2469,7 @@ namespace PoolWatcher
      criticalEvent(sendingProcess);
     }
 /*
-    else if (message.Contains("Duplicate share submitted")) // Rigel bug
+    else if (message.Contains("Duplicate share submitted")) // Rigel old bug
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
@@ -2477,7 +2477,7 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-    else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero bug (DNX)
+    else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero old bug (DNX)
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
@@ -2486,7 +2486,7 @@ namespace PoolWatcher
      criticalEvent(sendingProcess);
     }
 */
-    else if (message.Contains("PL0: [FAILED]")) // SRBMiner-Multi bug
+    else if (message.Contains("PL0: [FAILED]") || message.Contains("Mining will be paused until connection to the devfee pool can be established")) // SRBMiner-Multi bugs
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
