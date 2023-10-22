@@ -627,8 +627,25 @@ namespace PoolWatcher
          {
           output = t.Result;
 
-          if (curr_process == null) break;
-          else if (curr_process.HasExited) break;
+          if (output == null)
+          {
+           break;
+          }
+          else if (curr_process == null)
+          {
+           break;
+          }
+          else
+          {
+           try
+           {
+            if (curr_process.HasExited)
+            {
+             break;
+            }
+           }
+           catch { break; }
+          }
 
           if (!String.IsNullOrEmpty(output))
           {
@@ -655,7 +672,17 @@ namespace PoolWatcher
         if (shStdOutRead.IsClosed == false)
          shStdOutRead.Close();
        }
-       catch { }
+       catch (Exception ex)
+       {
+        Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+
+        if (Program.ru_lang)
+         Console.WriteLine("Убиваем зависший процесс (catch)");
+        else
+         Console.WriteLine("Kill hung process (catch)");
+
+        criticalEvent(curr_process);
+       }
       });
 
       errThread = new Thread(() =>
@@ -666,6 +693,7 @@ namespace PoolWatcher
         {
          string err;
          err = readerStdErr.ReadLine();
+         if (err == null) break;
 
          if (!String.IsNullOrEmpty(err))
          {
@@ -678,7 +706,17 @@ namespace PoolWatcher
         if (shStdErrRead.IsClosed == false)
          shStdErrRead.Close();
        }
-       catch { }
+       catch (Exception ex)
+       {
+        Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+
+        if (Program.ru_lang)
+         Console.WriteLine("Убиваем зависший процесс (catch)");
+        else
+         Console.WriteLine("Kill hung process (catch)");
+
+        criticalEvent(curr_process);
+       }
       });
      }
 
@@ -1519,20 +1557,27 @@ namespace PoolWatcher
     {
      Thread.Sleep(sleep_timeout / 10);
 
-     bool for_need_exit = false;
      lock (listener_status)
      {
+      bool for_need_exit = false;
+
       if ((int)listener_status == 1)
       {
        bool print_message = false;
 
        if (slaveMinerProcess0 == null && slaveMinerProcess1 == null && masterMinerProcess == null)
+       {
         print_message = true;
+
+        Console.WriteLine("Executed snippet 0");
+       }
        else
        {
         if (slaveMinerProcess0 != null) if (slaveMinerProcess0.HasExited) print_message = true;
         if (slaveMinerProcess1 != null) if (slaveMinerProcess1.HasExited) print_message = true;
         if (masterMinerProcess != null) if (masterMinerProcess.HasExited) print_message = true;
+
+        if (print_message) Console.WriteLine("Executed snippet 1");
        }
 
        if (print_message)
@@ -1551,9 +1596,9 @@ namespace PoolWatcher
       {
        for_need_exit = true;
       }
-     }
 
-     if (for_need_exit) break;
+      if (for_need_exit) break;
+     }
     }
 
     evt_main.Set();
@@ -2977,41 +3022,44 @@ namespace PoolWatcher
           {
            if (System.IO.File.Exists(exe_lines[1]))
            {
-            if (Program.ru_lang)
-             Console.WriteLine(Environment.NewLine + "Запуск майнера номер 2 (альтернативный)");
-            else
-             Console.WriteLine(Environment.NewLine + "Start of miner number 2 (alternative)");
-
-            slaveMinerProcess0DeathTime = DateTime.MaxValue;
-
-            listener_status = 1;
-
-            if (exe_lines[1].EndsWith(".lnk", StringComparison.CurrentCulture))
+            lock (listener_status)
             {
-             IWshShortcut link = (IWshShortcut)shell.CreateShortcut(exe_lines[1]);
+             listener_status = 1;
 
-             if (link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture))
-              WerAddExcludedApplication(Path.ChangeExtension(link.TargetPath, ".exe"), false);
-             WerAddExcludedApplication(link.TargetPath, false);
-
-             if (options.without_external_windows == 1)
-              CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[1], link.WorkingDirectory, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave0, false);
+             if (Program.ru_lang)
+              Console.WriteLine(Environment.NewLine + "Запуск майнера номер 2 (альтернативный)");
              else
-              CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[1], link.WorkingDirectory, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave0, false);
-            }
-            else
-            {
-             if ((new FileInfo(exe_lines[1])).FullName.EndsWith(".bat", StringComparison.CurrentCulture))
-              WerAddExcludedApplication(Path.ChangeExtension((new FileInfo(exe_lines[1])).FullName, ".exe"), false);
-             WerAddExcludedApplication((new FileInfo(exe_lines[1])).FullName, false);
+              Console.WriteLine(Environment.NewLine + "Start of miner number 2 (alternative)");
 
-             if (options.without_external_windows == 1)
-              CallProcess((new FileInfo(exe_lines[1])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[1])).FullName + "\"" + " " + config_lines[1], (new FileInfo(exe_lines[1])).DirectoryName, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave0, false);
+             slaveMinerProcess0DeathTime = DateTime.MaxValue;
+
+             if (exe_lines[1].EndsWith(".lnk", StringComparison.CurrentCulture))
+             {
+              IWshShortcut link = (IWshShortcut)shell.CreateShortcut(exe_lines[1]);
+
+              if (link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture))
+               WerAddExcludedApplication(Path.ChangeExtension(link.TargetPath, ".exe"), false);
+              WerAddExcludedApplication(link.TargetPath, false);
+
+              if (options.without_external_windows == 1)
+               CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[1], link.WorkingDirectory, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave0, false);
+              else
+               CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[1], link.WorkingDirectory, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave0, false);
+             }
              else
-              CallProcess((new FileInfo(exe_lines[1])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[1])).FullName + "\"" + " " + config_lines[1], (new FileInfo(exe_lines[1])).DirectoryName, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave0, false);
-            }
+             {
+              if ((new FileInfo(exe_lines[1])).FullName.EndsWith(".bat", StringComparison.CurrentCulture))
+               WerAddExcludedApplication(Path.ChangeExtension((new FileInfo(exe_lines[1])).FullName, ".exe"), false);
+              WerAddExcludedApplication((new FileInfo(exe_lines[1])).FullName, false);
 
-            slave0MinerProcessCounter++;
+              if (options.without_external_windows == 1)
+               CallProcess((new FileInfo(exe_lines[1])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[1])).FullName + "\"" + " " + config_lines[1], (new FileInfo(exe_lines[1])).DirectoryName, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave0, false);
+              else
+               CallProcess((new FileInfo(exe_lines[1])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[1])).FullName + "\"" + " " + config_lines[1], (new FileInfo(exe_lines[1])).DirectoryName, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave0, false);
+             }
+
+             slave0MinerProcessCounter++;
+            }
            }
            else
            {
@@ -3059,41 +3107,44 @@ namespace PoolWatcher
           {
            if (System.IO.File.Exists(exe_lines[2]))
            {
-            if (Program.ru_lang)
-             Console.WriteLine(Environment.NewLine + "Запуск майнера номер 3 (альтернативный)");
-            else
-             Console.WriteLine(Environment.NewLine + "Start of miner number 3 (alternative)");
-
-            slaveMinerProcess1DeathTime = DateTime.MaxValue;
-
-            listener_status = 1;
-
-            if (exe_lines[2].EndsWith(".lnk", StringComparison.CurrentCulture))
+            lock (listener_status)
             {
-             IWshShortcut link = (IWshShortcut)shell.CreateShortcut(exe_lines[2]);
+             listener_status = 1;
 
-             if (link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture))
-              WerAddExcludedApplication(Path.ChangeExtension(link.TargetPath, ".exe"), false);
-             WerAddExcludedApplication(link.TargetPath, false);
-
-             if (options.without_external_windows == 1)
-              CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[2], link.WorkingDirectory, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave1, false);
+             if (Program.ru_lang)
+              Console.WriteLine(Environment.NewLine + "Запуск майнера номер 3 (альтернативный)");
              else
-              CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[2], link.WorkingDirectory, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave1, false);
-            }
-            else
-            {
-             if ((new FileInfo(exe_lines[2])).FullName.EndsWith(".bat", StringComparison.CurrentCulture))
-              WerAddExcludedApplication(Path.ChangeExtension((new FileInfo(exe_lines[2])).FullName, ".exe"), false);
-             WerAddExcludedApplication((new FileInfo(exe_lines[2])).FullName, false);
+              Console.WriteLine(Environment.NewLine + "Start of miner number 3 (alternative)");
 
-             if (options.without_external_windows == 1)
-              CallProcess((new FileInfo(exe_lines[2])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[2])).FullName + "\"" + " " + config_lines[2], (new FileInfo(exe_lines[2])).DirectoryName, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave1, false);
+             slaveMinerProcess1DeathTime = DateTime.MaxValue;
+
+             if (exe_lines[2].EndsWith(".lnk", StringComparison.CurrentCulture))
+             {
+              IWshShortcut link = (IWshShortcut)shell.CreateShortcut(exe_lines[2]);
+
+              if (link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture))
+               WerAddExcludedApplication(Path.ChangeExtension(link.TargetPath, ".exe"), false);
+              WerAddExcludedApplication(link.TargetPath, false);
+
+              if (options.without_external_windows == 1)
+               CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[2], link.WorkingDirectory, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave1, false);
+              else
+               CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[2], link.WorkingDirectory, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave1, false);
+             }
              else
-              CallProcess((new FileInfo(exe_lines[2])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[2])).FullName + "\"" + " " + config_lines[2], (new FileInfo(exe_lines[2])).DirectoryName, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave1, false);
-            }
+             {
+              if ((new FileInfo(exe_lines[2])).FullName.EndsWith(".bat", StringComparison.CurrentCulture))
+               WerAddExcludedApplication(Path.ChangeExtension((new FileInfo(exe_lines[2])).FullName, ".exe"), false);
+              WerAddExcludedApplication((new FileInfo(exe_lines[2])).FullName, false);
 
-            slave1MinerProcessCounter++;
+              if (options.without_external_windows == 1)
+               CallProcess((new FileInfo(exe_lines[2])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[2])).FullName + "\"" + " " + config_lines[2], (new FileInfo(exe_lines[2])).DirectoryName, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Slave1, false);
+              else
+               CallProcess((new FileInfo(exe_lines[2])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[2])).FullName + "\"" + " " + config_lines[2], (new FileInfo(exe_lines[2])).DirectoryName, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Slave1, false);
+             }
+
+             slave1MinerProcessCounter++;
+            }
            }
            else
            {
@@ -3347,41 +3398,44 @@ namespace PoolWatcher
            {
             if (System.IO.File.Exists(exe_lines[0]))
             {
-             if (Program.ru_lang)
-              Console.WriteLine(Environment.NewLine + "Запуск майнера номер 1 (основной)");
-             else
-              Console.WriteLine(Environment.NewLine + "Start of miner number 1 (base)");
-
-             masterMinerProcessDeathTime = DateTime.MaxValue;
-
-             listener_status = 1;
-
-             if (exe_lines[0].EndsWith(".lnk", StringComparison.CurrentCulture))
+             lock (listener_status)
              {
-              IWshShortcut link = (IWshShortcut)shell.CreateShortcut(exe_lines[0]);
+              listener_status = 1;
 
-              if (link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture))
-               WerAddExcludedApplication(Path.ChangeExtension(link.TargetPath, ".exe"), false);
-              WerAddExcludedApplication(link.TargetPath, false);
-
-              if (options.without_external_windows == 1)
-               CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[0], link.WorkingDirectory, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Master, false);
+              if (Program.ru_lang)
+               Console.WriteLine(Environment.NewLine + "Запуск майнера номер 1 (основной)");
               else
-               CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[0], link.WorkingDirectory, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Master, false);
-             }
-             else
-             {
-              if ((new FileInfo(exe_lines[0])).FullName.EndsWith(".bat", StringComparison.CurrentCulture))
-               WerAddExcludedApplication(Path.ChangeExtension((new FileInfo(exe_lines[0])).FullName, ".exe"), false);
-              WerAddExcludedApplication((new FileInfo(exe_lines[0])).FullName, false);
+               Console.WriteLine(Environment.NewLine + "Start of miner number 1 (base)");
 
-              if (options.without_external_windows == 1)
-               CallProcess((new FileInfo(exe_lines[0])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[0])).FullName + "\"" + " " + config_lines[0], (new FileInfo(exe_lines[0])).DirectoryName, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Master, false);
+              masterMinerProcessDeathTime = DateTime.MaxValue;
+
+              if (exe_lines[0].EndsWith(".lnk", StringComparison.CurrentCulture))
+              {
+               IWshShortcut link = (IWshShortcut)shell.CreateShortcut(exe_lines[0]);
+
+               if (link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture))
+                WerAddExcludedApplication(Path.ChangeExtension(link.TargetPath, ".exe"), false);
+               WerAddExcludedApplication(link.TargetPath, false);
+
+               if (options.without_external_windows == 1)
+                CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[0], link.WorkingDirectory, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Master, false);
+               else
+                CallProcess(link.TargetPath.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + link.TargetPath + "\"" + " " + config_lines[0], link.WorkingDirectory, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Master, false);
+              }
               else
-               CallProcess((new FileInfo(exe_lines[0])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[0])).FullName + "\"" + " " + config_lines[0], (new FileInfo(exe_lines[0])).DirectoryName, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Master, false);
-             }
+              {
+               if ((new FileInfo(exe_lines[0])).FullName.EndsWith(".bat", StringComparison.CurrentCulture))
+                WerAddExcludedApplication(Path.ChangeExtension((new FileInfo(exe_lines[0])).FullName, ".exe"), false);
+               WerAddExcludedApplication((new FileInfo(exe_lines[0])).FullName, false);
 
-             masterMinerProcessCounter++;
+               if (options.without_external_windows == 1)
+                CallProcess((new FileInfo(exe_lines[0])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[0])).FullName + "\"" + " " + config_lines[0], (new FileInfo(exe_lines[0])).DirectoryName, CreateProcessFlags.CREATE_NO_WINDOW, ProcessVariant.Master, false);
+               else
+                CallProcess((new FileInfo(exe_lines[0])).FullName.EndsWith(".bat", StringComparison.CurrentCulture), "\"" + (new FileInfo(exe_lines[0])).FullName + "\"" + " " + config_lines[0], (new FileInfo(exe_lines[0])).DirectoryName, CreateProcessFlags.CREATE_NEW_CONSOLE, ProcessVariant.Master, false);
+              }
+
+              masterMinerProcessCounter++;
+             }
             }
             else
             {
