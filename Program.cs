@@ -1547,6 +1547,10 @@ namespace PoolWatcher
         for_need_exit = true;
        }
       }
+      else
+      {
+       for_need_exit = true;
+      }
      }
 
      if (for_need_exit) break;
