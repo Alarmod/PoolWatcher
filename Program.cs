@@ -108,6 +108,8 @@ namespace PoolWatcher
  class Options
  {
   public const int default_wait_timeout_value = 360;
+  public const int default_share_wait_timeout_value = 1200;
+
   public const int default_sleep_timeout = 90000;
 
   [Option('k', "kill_pill", Default = 0, Required = false)]
@@ -130,6 +132,9 @@ namespace PoolWatcher
 
   [Option('p', "wait_timeout", Default = default_wait_timeout_value, Required = false)]
   public int wait_timeout { get; set; }
+
+  [Option('q', "share_wait_timeout", Default = default_share_wait_timeout_value, Required = false)]
+  public int share_wait_timeout { get; set; }
 
   [Option('i', "ignore_no_active_pools_message", Default = 1, Required = false)]
   public int ignore_no_active_pools_message { get; set; }
@@ -782,9 +787,9 @@ namespace PoolWatcher
                  {
                   timeOfLatestAccepted = (object)DateTime.Now;
 
-                  acceptedTimeOut = (object)(2 * options.wait_timeout);
+                  acceptedTimeOut = (object)(options.share_wait_timeout + 360);
 
-                  Console.WriteLine("Инициализировали слежение за шарами, первую шару ждём {0}.0 секунд (x2 к базовому времени ожидания начала майнинга), следующие шары - в 2 раза меньше", ((int)acceptedTimeOut).ToString());
+                  Console.WriteLine("Инициализировали слежение за шарами, первую шару ждём {0}.0 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
                  }
                 }
                }
@@ -1125,9 +1130,9 @@ namespace PoolWatcher
               {
                timeOfLatestAccepted = (object)DateTime.Now;
 
-               acceptedTimeOut = (object)(2 * options.wait_timeout);
+               acceptedTimeOut = (object)(options.share_wait_timeout + 360);
 
-               Console.WriteLine("Переинициализировали слежение за шарами, первую шару ждём {0}.0 секунд (x2 к базовому времени ожидания начала майнинга), следующие шары - в 2 раза меньше", ((int)acceptedTimeOut).ToString());
+               Console.WriteLine("Переинициализировали слежение за шарами, первую шару ждём {0}.0 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
               }
              }
 
@@ -1287,6 +1292,20 @@ namespace PoolWatcher
          Console.WriteLine("Mining process is completed");
        }
       });
+     }
+     else
+     {
+      if (mainThread_enabled)
+      {
+       lock (timeOfLatestAccepted_SyncObject)
+       {
+        timeOfLatestAccepted = (object)DateTime.Now;
+
+        acceptedTimeOut = (object)(options.share_wait_timeout + 360);
+
+        Console.WriteLine("Инициализировали слежение за шарами, первую шару ждём {0}.0 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
+       }
+      }
      }
 
      if (options.without_external_windows == 1)
@@ -2032,9 +2051,9 @@ namespace PoolWatcher
     lock (lobj)
     {
      if (Program.ru_lang)
-      Console.WriteLine("Ожидайте завершения работы майнера '" + minerid + "', осталось не более 15 секунд (антивотчдог-система)!");
+      Console.WriteLine("Ожидайте завершения работы майнера '" + minerid + "' (" + exe_filename + "), осталось не более 15 секунд (антивотчдог-система)!");
      else
-      Console.WriteLine("Expect completion of miner '" + minerid + "' work, no more than 15 seconds left (anti-watchdog system)!");
+      Console.WriteLine("Expect completion of miner '" + minerid + "' (" + exe_filename + ") work, no more than 15 seconds left (anti-watchdog system)!");
     }
 
     for (int i = 0; i < 90; i++)
@@ -2622,8 +2641,9 @@ namespace PoolWatcher
      Console.ForegroundColor = ConsoleColor.Red;
      Console.WriteLine(message);
      Console.ForegroundColor = ConsoleColor.White;
-    } // xmrig and wildrig   
-    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")))
+    }
+    // xmrig, wildrig and SRB
+    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")) || message.Contains("Run time"))
     {
      if (mainThread_enabled)
      {
@@ -2683,7 +2703,9 @@ namespace PoolWatcher
        }
        else
        {
-        if (message.Contains("15m:") && message.Contains("Ignored:"))
+        if (message.Contains("Run time"))
+         Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
+        else if (message.Contains("15m:") && message.Contains("Ignored:"))
          Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
         else
          Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
@@ -2706,7 +2728,7 @@ namespace PoolWatcher
      {
       lock (timeOfLatestAccepted_SyncObject)
       {
-       acceptedTimeOut = (object)(options.wait_timeout);
+       acceptedTimeOut = (object)(options.share_wait_timeout);
 
        timeOfLatestAccepted = (object)DateTime.Now;
       }
@@ -2738,11 +2760,12 @@ namespace PoolWatcher
     Console.WriteLine("-e : Завершить работу внутреннего цикла после поломки майнера; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-d : Использование dummy-майнера (с именем dummy.exe), по умолчанию запускается с параметрами '" + default_dummy_params + "', если иное не указано в пятой строчке конфигурационного файла; значения: 0 или 1, по умолчанию 0");
     Console.WriteLine("-p : Базовый период ожидания запуска майнера, по умолчанию " + Options.default_wait_timeout_value + " секунд");
+    Console.WriteLine("-q : Базовый период ожидания первой шары, по умолчанию " + Options.default_share_wait_timeout_value + " секунд");
     Console.WriteLine("-i : Игнорировать сообщения вида 'no active pools'; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-v : Время бана пула (минут); значения: по умолчанию 30 минут");
     Console.WriteLine("-m : Поведение при наступлении события \"долгое время нет шар\"; значения: 0 (бан) или 1 (рестарт майнера), по умолчанию 1" + Environment.NewLine + Environment.NewLine);
 
-    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d 1 -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
+    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -q " + Options.default_share_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
    else
    {
@@ -2755,11 +2778,12 @@ namespace PoolWatcher
     Console.WriteLine("-e : Quit internal cycle after miner crash; variants: 0 or 1, default 1");
     Console.WriteLine("-d : Using a dummy-miner (named as dummy.exe), by default it starts with parameters '" + default_dummy_params + "', unless otherwise specified in the fifth line of the configuration file; variants: 0 or 1, default 0");
     Console.WriteLine("-p : Base waiting period for the launch of the miner, default " + Options.default_wait_timeout_value + " seconds");
+    Console.WriteLine("-q : Base waiting period for the first share, default " + Options.default_share_wait_timeout_value + " seconds");
     Console.WriteLine("-i : Ignore messages like 'no active pools'; variants: 0 or 1, default 1");
     Console.WriteLine("-v : Ban-time for the pool (minutes), default 30 minutes");
     Console.WriteLine("-m : Behavior upon occurrence of an event \"For a long time there is no shares\"; variants: 0 (ban) or 1 (miner restart), by default 1" + Environment.NewLine + Environment.NewLine);
 
-    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
+    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -q " + Options.default_share_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
    Console.WriteLine();
 
@@ -2773,6 +2797,7 @@ namespace PoolWatcher
    else if (options.exit_after_miner_fail < 0 || options.exit_after_miner_fail > 1) badSettings = true;
    else if (options.use_dummy_miner < 0 || options.use_dummy_miner > 1) badSettings = true;
    else if (options.wait_timeout < 0 || options.wait_timeout > 1000000) badSettings = true;
+   else if (options.share_wait_timeout < 0 || options.share_wait_timeout > 1000000) badSettings = true;
    else if (options.ignore_no_active_pools_message < 0 || options.ignore_no_active_pools_message > 1) badSettings = true;
    else if (options.ban_timeout < 0 || options.ban_timeout > 1000000) badSettings = true;
    else if (options.ban_or_restart_no_shares_event < 0 || options.ban_or_restart_no_shares_event > 1) badSettings = true;
