@@ -618,15 +618,36 @@ namespace PoolWatcher
       {
        try
        {
-        while (readerStdOut.EndOfStream == false)
+        while (readerStdOut.BaseStream.CanRead)
         {
-         string output;
-         output = readerStdOut.ReadLine();
+         string output = null;
 
-         if (!String.IsNullOrEmpty(output))
+         Task<string> t = readerStdOut.ReadLineAsync();
+         if (t.Wait(300000))
          {
-          lock (lobj)
-          { ParseMessage(curr_process, output); }
+          output = t.Result;
+
+          if (curr_process == null) break;
+          else if (curr_process.HasExited) break;
+
+          if (!String.IsNullOrEmpty(output))
+          {
+           lock (lobj)
+           { ParseMessage(curr_process, output); }
+          }
+         }
+         else
+         {
+          if (curr_process != null)
+          {
+           if (Program.ru_lang)
+            Console.WriteLine("Убиваем зависший процесс");
+           else
+            Console.WriteLine("Kill hung process");
+
+           criticalEvent(curr_process);
+          }
+          break;
          }
         }
 
@@ -1485,24 +1506,50 @@ namespace PoolWatcher
 
   readonly static WshShell shell = new WshShell();
 
+  static volatile object listener_status = 0;
+
   [SecurityCritical]
   readonly static Thread listener = new Thread(() =>
   {
-   while (true)
+    while (true)
    {
     evt.WaitOne();
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 10; i++)
     {
-     Thread.Sleep(sleep_timeout / 5);
+     Thread.Sleep(sleep_timeout / 10);
 
-     if (slaveMinerProcess0 != null || slaveMinerProcess1 != null || masterMinerProcess != null)
+     bool for_need_exit = false;
+     lock (listener_status)
      {
-      if (slaveMinerProcess0 != null) if (slaveMinerProcess0.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
-      if (slaveMinerProcess1 != null) if (slaveMinerProcess1.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
-      if (masterMinerProcess != null) if (masterMinerProcess.HasExited) { Console.WriteLine("Fast exit, maybe you must set admin rights to Poolwatcher"); break; }
+      if ((int)listener_status == 1)
+      {
+       bool print_message = false;
+
+       if (slaveMinerProcess0 == null && slaveMinerProcess1 == null && masterMinerProcess == null)
+        print_message = true;
+       else
+       {
+        if (slaveMinerProcess0 != null) if (slaveMinerProcess0.HasExited) print_message = true;
+        if (slaveMinerProcess1 != null) if (slaveMinerProcess1.HasExited) print_message = true;
+        if (masterMinerProcess != null) if (masterMinerProcess.HasExited) print_message = true;
+       }
+
+       if (print_message)
+       {
+        listener_status = 0;
+
+        if (Program.ru_lang)
+         Console.WriteLine("Быстрый выход, возможно Вы должны запускать PoolWatcher с правами администратора");
+        else
+         Console.WriteLine("Fast exit, maybe You must set admin rights to PoolWatcher");
+
+        for_need_exit = true;
+       }
+      }
      }
-     else { Console.WriteLine("Fast exit"); break; }
+
+     if (for_need_exit) break;
     }
 
     evt_main.Set();
@@ -2625,7 +2672,7 @@ namespace PoolWatcher
     Console.WriteLine("-o : Прямой порядок завершения процесса добычи; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-e : Завершить работу внутреннего цикла после поломки майнера; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-d : Использование dummy-майнера (с именем dummy.exe), по умолчанию запускается с параметрами '" + default_dummy_params + "', если иное не указано в пятой строчке конфигурационного файла; значения: 0 или 1, по умолчанию 0");
-    Console.WriteLine("-p : Базовый период ожидания запуска майнера в бат-файле, по умолчанию " + Options.default_wait_timeout_value + " секунд");
+    Console.WriteLine("-p : Базовый период ожидания запуска майнера, по умолчанию " + Options.default_wait_timeout_value + " секунд");
     Console.WriteLine("-i : Игнорировать сообщения вида 'no active pools'; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-v : Время бана пула (минут); значения: по умолчанию 30 минут");
     Console.WriteLine("-m : Поведение при наступлении события \"долгое время нет шар\"; значения: 0 (бан) или 1 (рестарт майнера), по умолчанию 1" + Environment.NewLine + Environment.NewLine);
@@ -2642,7 +2689,7 @@ namespace PoolWatcher
     Console.WriteLine("-o : Direct procedure for completing the mining process; variants: 0 or 1, default 1");
     Console.WriteLine("-e : Quit internal cycle after miner crash; variants: 0 or 1, default 1");
     Console.WriteLine("-d : Using a dummy-miner (named as dummy.exe), by default it starts with parameters '" + default_dummy_params + "', unless otherwise specified in the fifth line of the configuration file; variants: 0 or 1, default 0");
-    Console.WriteLine("-p : Base waiting period for the launch of the miner in the bat-file, default " + Options.default_wait_timeout_value + " seconds");
+    Console.WriteLine("-p : Base waiting period for the launch of the miner, default " + Options.default_wait_timeout_value + " seconds");
     Console.WriteLine("-i : Ignore messages like 'no active pools'; variants: 0 or 1, default 1");
     Console.WriteLine("-v : Ban-time for the pool (minutes), default 30 minutes");
     Console.WriteLine("-m : Behavior upon occurrence of an event \"For a long time there is no shares\"; variants: 0 (ban) or 1 (miner restart), by default 1" + Environment.NewLine + Environment.NewLine);
@@ -2665,12 +2712,21 @@ namespace PoolWatcher
    else if (options.ban_timeout < 0 || options.ban_timeout > 1000000) badSettings = true;
    else if (options.ban_or_restart_no_shares_event < 0 || options.ban_or_restart_no_shares_event > 1) badSettings = true;
 
-   if (options.without_external_windows == 1)
+   if (options.without_external_windows == 0)
    {
     if (Program.ru_lang)
-     Console.WriteLine("Предупреждение: режим перехвата сообщений от SRB-майнера требует запуска следилки в многооконном режиме, то есть с ключем '-w 0', иначе может быть задержка с выводом лога в консоль");
+     Console.WriteLine("Предупреждение: режим перехвата сообщений с обработкой не активируется при внешнем окне майнера");
     else
-     Console.WriteLine("Warning: the mode of intercepting messages from the SRB-miner requires enabling multi-window mode, do it with next option: '-w 0', otherwise there may be a delay with the output of the log into the console");
+     Console.WriteLine("Warning: processing messages is not activated with external miner window");
+
+    Console.WriteLine();
+   }
+   else
+   {
+    if (Program.ru_lang)
+     Console.WriteLine("Предупреждение: если Вы используете SRBMiner-Multi, паузы между порциями сообщений могут достигать 2 и более минут, базовый период ожидания запуска майнера должен быть больше, иначе будут возникать коллизии на обработке информации");
+    else
+     Console.WriteLine("Warning: if you use SRBMiner-Multi, the pauses between portions of messages can reach 2 or more minutes, the base period of waiting for the miner should be larger, otherwise conflicts will arise in the processing of information");
 
     Console.WriteLine();
    }
@@ -2924,6 +2980,8 @@ namespace PoolWatcher
 
             slaveMinerProcess0DeathTime = DateTime.MaxValue;
 
+            listener_status = 1;
+
             if (exe_lines[1].EndsWith(".lnk", StringComparison.CurrentCulture))
             {
              IWshShortcut link = (IWshShortcut)shell.CreateShortcut(exe_lines[1]);
@@ -3003,6 +3061,8 @@ namespace PoolWatcher
              Console.WriteLine(Environment.NewLine + "Start of miner number 3 (alternative)");
 
             slaveMinerProcess1DeathTime = DateTime.MaxValue;
+
+            listener_status = 1;
 
             if (exe_lines[2].EndsWith(".lnk", StringComparison.CurrentCulture))
             {
@@ -3289,6 +3349,8 @@ namespace PoolWatcher
               Console.WriteLine(Environment.NewLine + "Start of miner number 1 (base)");
 
              masterMinerProcessDeathTime = DateTime.MaxValue;
+
+             listener_status = 1;
 
              if (exe_lines[0].EndsWith(".lnk", StringComparison.CurrentCulture))
              {
