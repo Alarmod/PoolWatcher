@@ -116,7 +116,7 @@ namespace PoolWatcher
   [Option('w', "without_external_windows", Default = 1, Required = false)]
   public int without_external_windows { get; set; }
 
-  [Option('s', "with_antiwatchdog", Default = 0, Required = false)]
+  [Option('s', "with_antiwatchdog", Default = 1, Required = false)]
   public int with_antiwatchdog { get; set; }
 
   [Option('o', "direct_order", Default = 1, Required = false)]
@@ -2002,7 +2002,15 @@ namespace PoolWatcher
   {
    try
    {
-    Thread.Sleep(1250);
+    lock (lobj)
+    {
+     if (Program.ru_lang)
+      Console.WriteLine("Антивотчдог-система стартовала");
+     else
+      Console.WriteLine("Aanti-watchdog system started");
+    }
+
+    Thread.Sleep(3500);
 
     string filename = (new FileInfo(arg)).Name;
     string exe_filename;
@@ -2024,12 +2032,12 @@ namespace PoolWatcher
     lock (lobj)
     {
      if (Program.ru_lang)
-      Console.WriteLine("Ожидайте завершения работы майнера '" + minerid + "', осталось не более 12 секунд (антивотчдог-система)!");
+      Console.WriteLine("Ожидайте завершения работы майнера '" + minerid + "', осталось не более 15 секунд (антивотчдог-система)!");
      else
-      Console.WriteLine("Expect completion of miner '" + minerid + "' work, no more than 12 seconds left (anti-watchdog system)!");
+      Console.WriteLine("Expect completion of miner '" + minerid + "' work, no more than 15 seconds left (anti-watchdog system)!");
     }
 
-    for (int i = 0; i < 60; i++)
+    for (int i = 0; i < 90; i++)
     {
      if (ProcessHelpers.IsRunning(Path.GetFileNameWithoutExtension(exe_filename)))
      {
@@ -2052,6 +2060,14 @@ namespace PoolWatcher
      {
       Thread.Sleep(200);
      }
+    }
+
+    lock (lobj)
+    {
+     if (Program.ru_lang)
+      Console.WriteLine("Антивотчдог-система завершила работу");
+     else
+      Console.WriteLine("Aanti-watchdog system stopped");
     }
    }
    catch { }
@@ -2717,7 +2733,7 @@ namespace PoolWatcher
 
     Console.WriteLine("-k : Убить таблетку до запуска майнеров; значения: 0 или 1, по умолчанию 0");
     Console.WriteLine("-w : Запустить майнеры без внешних окон; значения: 0 или 1, по умолчанию 1");
-    Console.WriteLine("-s : Поддержка антивотчдог-системы; задавайте имя батника как имя майнера; значения: 0 или 1, по умолчанию 0");
+    Console.WriteLine("-s : Поддержка антивотчдог-системы; если используете батник или ярлык, задавайте его имя также, как имя исполняемого файла; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-o : Прямой порядок завершения процесса добычи; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-e : Завершить работу внутреннего цикла после поломки майнера; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-d : Использование dummy-майнера (с именем dummy.exe), по умолчанию запускается с параметрами '" + default_dummy_params + "', если иное не указано в пятой строчке конфигурационного файла; значения: 0 или 1, по умолчанию 0");
@@ -2726,7 +2742,7 @@ namespace PoolWatcher
     Console.WriteLine("-v : Время бана пула (минут); значения: по умолчанию 30 минут");
     Console.WriteLine("-m : Поведение при наступлении события \"долгое время нет шар\"; значения: 0 (бан) или 1 (рестарт майнера), по умолчанию 1" + Environment.NewLine + Environment.NewLine);
 
-    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d 1 -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
+    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d 1 -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
    else
    {
@@ -2734,7 +2750,7 @@ namespace PoolWatcher
 
     Console.WriteLine("-k : Kill a pill before starting mining; variants: 0 or 1, default 0");
     Console.WriteLine("-w : Run without windows for external miners; variants: 0 or 1, default 1");
-    Console.WriteLine("-s : Anti-watchdog support; set bat-file name as a miner; variants: 0 or 1, default 0");
+    Console.WriteLine("-s : Anti-watchdog support; if you use a bat-file or lnk-shortcut, set his name as well as the name of the executable file; variants: 0 or 1, default 1");
     Console.WriteLine("-o : Direct procedure for completing the mining process; variants: 0 or 1, default 1");
     Console.WriteLine("-e : Quit internal cycle after miner crash; variants: 0 or 1, default 1");
     Console.WriteLine("-d : Using a dummy-miner (named as dummy.exe), by default it starts with parameters '" + default_dummy_params + "', unless otherwise specified in the fifth line of the configuration file; variants: 0 or 1, default 0");
@@ -2743,7 +2759,7 @@ namespace PoolWatcher
     Console.WriteLine("-v : Ban-time for the pool (minutes), default 30 minutes");
     Console.WriteLine("-m : Behavior upon occurrence of an event \"For a long time there is no shares\"; variants: 0 (ban) or 1 (miner restart), by default 1" + Environment.NewLine + Environment.NewLine);
 
-    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 0 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
+    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -i 1 -v 30 -m 1");
    }
    Console.WriteLine();
 
