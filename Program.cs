@@ -1120,9 +1120,9 @@ namespace PoolWatcher
              exit_timer = DateTime.Now;
 
              if (Program.ru_lang)
-              Console.WriteLine("Даем временной отрезок до " + (options.wait_timeout / 4.0).ToString("#.000").Replace(',', '.') + " секунд на старт новых майнеров (т.е. четверть от базового периода ожидания, меньше в случае завершения сценария добычи)");
+              Console.WriteLine("Даем временной отрезок до " + (options.wait_timeout / 4.0).ToString("0.000").Replace(',', '.') + " секунд на старт новых майнеров (т.е. четверть от базового периода ожидания, меньше в случае завершения сценария добычи)");
              else
-              Console.WriteLine("We give a time period up to " + (options.wait_timeout / 4.0).ToString("#.000").Replace(',', '.') + " seconds to start new miners (that is a quarter of the base waiting period, less if mining scenario ends)");
+              Console.WriteLine("We give a time period up to " + (options.wait_timeout / 4.0).ToString("0.000").Replace(',', '.') + " seconds to start new miners (that is a quarter of the base waiting period, less if mining scenario ends)");
 
              if (mainThread_enabled)
              {
@@ -2704,11 +2704,11 @@ namespace PoolWatcher
        else
        {
         if (message.Contains("Run time"))
-         Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("#.000").Replace(',', '.'));
+         Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
         else if (message.Contains("15m:") && message.Contains("Ignored:"))
-         Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("#.000").Replace(',', '.'));
+         Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
         else
-         Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("#.000").Replace(',', '.'));
+         Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
        }
       }
      }
