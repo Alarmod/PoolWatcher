@@ -526,9 +526,9 @@ namespace PoolWatcher
     if (isBatFile)
     {
      if (Program.ru_lang)
-      Console.WriteLine("Запуск майнера должен быть выполнен не позднее чем через " + options.wait_timeout + ".0 секунд; если Ваш батник не сразу запускает процесс добычи, а Вы остановите батник тем или иным способом, то процесс прервется после соответствующего таймаута, не нервничайте, будьте счастливы");
+      Console.WriteLine("Запуск майнера должен быть выполнен не позднее чем через " + options.wait_timeout + ".000 секунд; если Ваш батник не сразу запускает процесс добычи, а Вы остановите батник тем или иным способом, то процесс прервется после соответствующего таймаута, не нервничайте, будьте счастливы");
      else
-      Console.WriteLine("Miner launch must be completed no later than in " + options.wait_timeout + ".0 seconds; if Your bat-file does not immediately start the mining process, and You stop bat-file in one way or another, the process will be interrupted after a corresponding timeout, don't worry be happy");
+      Console.WriteLine("Miner launch must be completed no later than in " + options.wait_timeout + ".000 seconds; if Your bat-file does not immediately start the mining process, and You stop bat-file in one way or another, the process will be interrupted after a corresponding timeout, don't worry be happy");
     }
 
     DateTime dummyDate = DateTime.Now;
@@ -789,7 +789,7 @@ namespace PoolWatcher
 
                   acceptedTimeOut = (object)(options.share_wait_timeout + 360);
 
-                  Console.WriteLine("Инициализировали слежение за шарами, первую шару ждём {0}.0 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
+                  Console.WriteLine("Инициализировали слежение за шарами, первую шару ждем {0}.000 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
                  }
                 }
                }
@@ -1120,9 +1120,9 @@ namespace PoolWatcher
              exit_timer = DateTime.Now;
 
              if (Program.ru_lang)
-              Console.WriteLine("Даем временной отрезок до " + (options.wait_timeout / 4.0).ToString().Replace(',', '.') + " секунд на старт новых майнеров (т.е. четверть от базового периода ожидания, меньше в случае завершения сценария добычи)");
+              Console.WriteLine("Даем временной отрезок до " + (options.wait_timeout / 4.0).ToString("#.000").Replace(',', '.') + " секунд на старт новых майнеров (т.е. четверть от базового периода ожидания, меньше в случае завершения сценария добычи)");
              else
-              Console.WriteLine("We give a time period up to " + (options.wait_timeout / 4.0).ToString().Replace(',', '.') + " seconds to start new miners (that is a quarter of the base waiting period, less if mining scenario ends)");
+              Console.WriteLine("We give a time period up to " + (options.wait_timeout / 4.0).ToString("#.000").Replace(',', '.') + " seconds to start new miners (that is a quarter of the base waiting period, less if mining scenario ends)");
 
              if (mainThread_enabled)
              {
@@ -1132,7 +1132,7 @@ namespace PoolWatcher
 
                acceptedTimeOut = (object)(options.share_wait_timeout + 360);
 
-               Console.WriteLine("Переинициализировали слежение за шарами, первую шару ждём {0}.0 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
+               Console.WriteLine("Переинициализировали слежение за шарами, первую шару ждем {0}.000 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
               }
              }
 
@@ -1303,7 +1303,7 @@ namespace PoolWatcher
 
         acceptedTimeOut = (object)(options.share_wait_timeout + 360);
 
-        Console.WriteLine("Инициализировали слежение за шарами, первую шару ждём {0}.0 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
+        Console.WriteLine("Инициализировали слежение за шарами, первую шару ждем {0}.000 секунд; следующие шары на 360 секунд меньше", ((int)acceptedTimeOut).ToString());
        }
       }
      }
@@ -1648,7 +1648,7 @@ namespace PoolWatcher
     Console.WriteLine("Run pool ban: {0} minutes", options.ban_timeout);
     Console.ForegroundColor = ConsoleColor.White;
 
-    Thread.Sleep(options.ban_timeout * 60 * 1000); // ждём завершения бана
+    Thread.Sleep(options.ban_timeout * 60 * 1000); // ждем завершения бана
 
     Console.ForegroundColor = ConsoleColor.Magenta;
     Console.WriteLine("Pool ban completed");
@@ -2658,7 +2658,7 @@ namespace PoolWatcher
         if (options.ban_or_restart_no_shares_event == 0)
         {
          Console.ForegroundColor = ConsoleColor.Magenta;
-         Console.WriteLine("Слишком долго нет ни одной принятой шары, пул идёт в бан");
+         Console.WriteLine("Слишком долго нет ни одной принятой шары, пул идет в бан");
          Console.ForegroundColor = ConsoleColor.White;
 
          lock (timeOfLatestBan_SyncObject)
@@ -2704,11 +2704,11 @@ namespace PoolWatcher
        else
        {
         if (message.Contains("Run time"))
-         Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
+         Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("#.000").Replace(',', '.'));
         else if (message.Contains("15m:") && message.Contains("Ignored:"))
-         Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
+         Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("#.000").Replace(',', '.'));
         else
-         Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString().Replace(',', '.'));
+         Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("#.000").Replace(',', '.'));
        }
       }
      }
@@ -2824,7 +2824,7 @@ namespace PoolWatcher
    if (Program.ru_lang)
     Console.WriteLine("При запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"");
    else
-    Console.WriteLine("When starting batch files, the monitoring of the following processes is turned off: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\"\"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" and \"taskkill\"");
+    Console.WriteLine("When starting batch-files, the monitoring of the following processes is turned off: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\"\"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" and \"taskkill\"");
 
    if (badSettings)
    {
@@ -2993,7 +2993,6 @@ namespace PoolWatcher
    {
     Console.WriteLine("Версия следилки: " + version + Environment.NewLine);
     Console.WriteLine("Для завершения добычи используйте закрытие основного окна с помощью крестика, вызов \"Ctrl+C\" или функцию \"Завершение дерева процессов\" в \"Диспетчере задач\"!" + Environment.NewLine);
-
 
     Console.WriteLine("Адреса для доната: ");
     PrintDonateWallets();
@@ -3230,7 +3229,7 @@ namespace PoolWatcher
           if (Program.ru_lang)
            Console.WriteLine("Процесс '" + exe_lines[1] + "' перестал отвечать, ждем до 25 секунд и завершаем текущий цикл");
           else
-           Console.WriteLine("The process '" + exe_lines[1] + "' has stopped answering, we are waiting for up to 25 seconds and we complete the current cycle");
+           Console.WriteLine("The process '" + exe_lines[1] + "' has stopped answering, we are waiting for up to 25 seconds and complete the current cycle");
 
           UInt64 cur_slave0MinerProcessCounter = slave0MinerProcessCounter;
 
@@ -3264,7 +3263,7 @@ namespace PoolWatcher
           if (Program.ru_lang)
            Console.WriteLine("Процесс '" + exe_lines[2] + "' перестал отвечать, ждем до 25 секунд и завершаем текущий цикл");
           else
-           Console.WriteLine("The process '" + exe_lines[2] + "' has stopped answering, we are waiting for up to 25 seconds and we complete the current cycle");
+           Console.WriteLine("The process '" + exe_lines[2] + "' has stopped answering, we are waiting for up to 25 seconds and complete the current cycle");
 
           UInt64 cur_slave1MinerProcessCounter = slave1MinerProcessCounter;
 
@@ -3521,7 +3520,7 @@ namespace PoolWatcher
            if (Program.ru_lang)
             Console.WriteLine("Процесс '" + exe_lines[0] + "' перестал отвечать, ждем до 25 секунд и завершаем текущий цикл");
            else
-            Console.WriteLine("The process '" + exe_lines[0] + "' has stopped answering, we are waiting for up to 25 seconds and we complete the current cycle");
+            Console.WriteLine("The process '" + exe_lines[0] + "' has stopped answering, we are waiting for up to 25 seconds and complete the current cycle");
 
            UInt64 cur_masterMinerProcessCounter = masterMinerProcessCounter;
 
@@ -3597,7 +3596,7 @@ namespace PoolWatcher
     }
     else
     {
-     Console.WriteLine("System exception was received that interrupted the work of the watcher:" + ex.Message);
+     Console.WriteLine("System exception was received that interrupted the work of the watcher: " + ex.Message);
     }
 
     try
@@ -3631,7 +3630,7 @@ namespace PoolWatcher
      p.Kill();
     }
 
-    Console.WriteLine("DEBUG :: dummy_status_ok: false");
+    //Console.WriteLine("DEBUG :: dummy_status_ok: false");
    }
    else if (e.Data.Contains("Authorized on Stratum Server"))
    {
@@ -3646,7 +3645,7 @@ namespace PoolWatcher
      p.Kill();
     }
 
-    Console.WriteLine("DEBUG :: dummy_status_ok: true");
+    //Console.WriteLine("DEBUG :: dummy_status_ok: true");
    }
   }
  }
