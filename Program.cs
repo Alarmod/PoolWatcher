@@ -630,9 +630,9 @@ namespace PoolWatcher
          Task<string> t = readerStdOut.ReadLineAsync();
 
          bool t_wait_result = false;
-         for (int i = 0; i < 300; i++)
+         for (int i = 0; i < 100; i++)
          {
-          t_wait_result = t.Wait(1000);
+          t_wait_result = t.Wait(3000);
 
           if (t_wait_result == true) break;
 
@@ -691,16 +691,14 @@ namespace PoolWatcher
          }
          else
          {
-          if (curr_process != null)
+          lock (lobj)
           {
-           lock (lobj)
-           {
-            if (Program.ru_lang)
-             Console.WriteLine("Контроль COUT-потока майнера завершен");
-            else
-             Console.WriteLine("COUT-thread control finished");
-           }
+           if (Program.ru_lang)
+            Console.WriteLine("Контроль COUT-потока майнера завершен");
+           else
+            Console.WriteLine("COUT-thread control finished");
           }
+
           break;
          }
         }
@@ -735,78 +733,98 @@ namespace PoolWatcher
 
          Task<string> t = readerStdErr.ReadLineAsync();
 
-         bool t_wait_result = false;
-         for (int i = 0; i < 300; i++)
+         bool global_break = false;
+         while (true)
          {
-          t_wait_result = t.Wait(1000);
-
-          if (t_wait_result == true) break;
-
-          if (curr_process == null)
+          bool t_wait_result = false;
+          for (int i = 0; i < 100; i++)
           {
-           t_wait_result = false;
-           break;
-          }
-          else
-          {
-           try
-           {
-            if (curr_process.HasExited)
-            {
-             t_wait_result = false;
-             break;
-            }
-           }
-           catch
+           t_wait_result = t.Wait(3000);
+
+           if (t_wait_result == true) break;
+
+           if (curr_process == null)
            {
             t_wait_result = false;
+            global_break = true;
             break;
            }
-          }
-         }
-
-         if (t_wait_result)
-         {
-          output = t.Result;
-
-          if (output == null)
-          {
-           break;
-          }
-          else if (curr_process == null)
-          {
-           break;
-          }
-          else
-          {
-           try
+           else
            {
-            if (curr_process.HasExited)
+            try
             {
+             if (curr_process.HasExited)
+             {
+              t_wait_result = false;
+              global_break = true;
+              break;
+             }
+            }
+            catch
+            {
+             t_wait_result = false;
+             global_break = true;
              break;
             }
            }
-           catch { break; }
           }
 
-          if (!String.IsNullOrEmpty(output))
+          if (t_wait_result)
           {
-           lock (lobj)
-           { ParseMessage(curr_process, output); }
+           output = t.Result;
+
+           if (output == null)
+           {
+            global_break = true;
+           }
+           else if (curr_process == null)
+           {
+            global_break = true;
+           }
+           else
+           {
+            try
+            {
+             if (curr_process.HasExited)
+             {
+              global_break = true;
+             }
+            }
+            catch { global_break = true; }
+           }
+
+           if (global_break) break;
+
+           if (!String.IsNullOrEmpty(output))
+           {
+            lock (lobj)
+            { ParseMessage(curr_process, output); }
+           }
           }
-         }
-         else
-         {
-          if (curr_process != null)
+          else if (global_break)
+           break;
+          else
           {
            lock (lobj)
            {
             if (Program.ru_lang)
-             Console.WriteLine("Контроль CERR-потока майнера завершен");
+             Console.WriteLine("Контроль CERR-потока майнера продолжается");
             else
-             Console.WriteLine("CERR-thread control finished");
+             Console.WriteLine("CERR-thread control online");
            }
           }
+         }
+
+         if (global_break)
+         {
+          lock (lobj)
+          {
+           if (Program.ru_lang)
+            Console.WriteLine("Контроль CERR-потока майнера завершен");
+           else
+            Console.WriteLine("CERR-thread control finished");
+          }
+
           break;
          }
         }
