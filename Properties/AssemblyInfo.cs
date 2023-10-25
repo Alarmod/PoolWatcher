@@ -23,6 +23,6 @@ using System.Runtime.InteropServices;
 //      Minor Version
 //      Build Number
 //
-[assembly: AssemblyVersion("1.1.812")]
-[assembly: AssemblyFileVersion("1.1.812")]
+[assembly: AssemblyVersion("1.1.823")]
+[assembly: AssemblyFileVersion("1.1.823")]
 

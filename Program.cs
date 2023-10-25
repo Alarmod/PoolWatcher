@@ -628,7 +628,38 @@ namespace PoolWatcher
          string output = null;
 
          Task<string> t = readerStdOut.ReadLineAsync();
-         if (t.Wait(300000))
+
+         bool t_wait_result = false;
+         for (int i = 0; i < 300; i++)
+         {
+          t_wait_result = t.Wait(1000);
+
+          if (t_wait_result == true) break;
+
+          if (curr_process == null)
+          {
+           t_wait_result = false;
+           break;
+          }
+          else
+          {
+           try
+           {
+            if (curr_process.HasExited)
+            {
+             t_wait_result = false;
+             break;
+            }
+           }
+           catch
+           {
+            t_wait_result = false;
+            break;
+           }
+          }
+         }
+
+         if (t_wait_result)
          {
           output = t.Result;
 
@@ -663,11 +694,9 @@ namespace PoolWatcher
           if (curr_process != null)
           {
            if (Program.ru_lang)
-            Console.WriteLine("Убиваем зависший процесс");
+            Console.WriteLine("Контролируемый процесс завершился или неожиданно перезапустился (out)");
            else
-            Console.WriteLine("Kill hung process");
-
-           criticalEvent(curr_process);
+            Console.WriteLine("The controlled process ended or suddenly restarted (out)");
           }
           break;
          }
@@ -682,9 +711,9 @@ namespace PoolWatcher
         Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
 
         if (Program.ru_lang)
-         Console.WriteLine("Убиваем зависший процесс (catch)");
+         Console.WriteLine("Убиваем зависший процесс");
         else
-         Console.WriteLine("Kill hung process (catch)");
+         Console.WriteLine("Kill hung process");
 
         criticalEvent(curr_process);
        }
@@ -694,16 +723,82 @@ namespace PoolWatcher
       {
        try
        {
-        while (readerStdErr.EndOfStream == false)
+        while (readerStdErr.BaseStream.CanRead)
         {
-         string err;
-         err = readerStdErr.ReadLine();
-         if (err == null) break;
+         string output = null;
 
-         if (!String.IsNullOrEmpty(err))
+         Task<string> t = readerStdErr.ReadLineAsync();
+
+         bool t_wait_result = false;
+         for (int i = 0; i < 300; i++)
          {
-          lock (lobj)
-          { ParseMessage(curr_process, err); }
+          t_wait_result = t.Wait(1000);
+
+          if (t_wait_result == true) break;
+
+          if (curr_process == null)
+          {
+           t_wait_result = false;
+           break;
+          }
+          else
+          {
+           try
+           {
+            if (curr_process.HasExited)
+            {
+             t_wait_result = false;
+             break;
+            }
+           }
+           catch
+           {
+            t_wait_result = false;
+            break;
+           }
+          }
+         }
+
+         if (t_wait_result)
+         {
+          output = t.Result;
+
+          if (output == null)
+          {
+           break;
+          }
+          else if (curr_process == null)
+          {
+           break;
+          }
+          else
+          {
+           try
+           {
+            if (curr_process.HasExited)
+            {
+             break;
+            }
+           }
+           catch { break; }
+          }
+
+          if (!String.IsNullOrEmpty(output))
+          {
+           lock (lobj)
+           { ParseMessage(curr_process, output); }
+          }
+         }
+         else
+         {
+          if (curr_process != null)
+          {
+           if (Program.ru_lang)
+            Console.WriteLine("Контролируемый процесс завершился или неожиданно перезапустился (err)");
+           else
+            Console.WriteLine("The controlled process ended or suddenly restarted (err)");
+          }
+          break;
          }
         }
 
@@ -716,9 +811,9 @@ namespace PoolWatcher
         Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
 
         if (Program.ru_lang)
-         Console.WriteLine("Убиваем зависший процесс (catch)");
+         Console.WriteLine("Убиваем зависший процесс");
         else
-         Console.WriteLine("Kill hung process (catch)");
+         Console.WriteLine("Kill hung process");
 
         criticalEvent(curr_process);
        }
@@ -1360,6 +1455,7 @@ namespace PoolWatcher
      if (options.without_external_windows == 1)
      {
       outThread.Join();
+
       errThread.Join();
      }
 
@@ -1568,7 +1664,7 @@ namespace PoolWatcher
   [SecurityCritical]
   readonly static Thread listener = new Thread(() =>
   {
-    while (true)
+   while (true)
    {
     evt.WaitOne();
 
@@ -2548,24 +2644,24 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-/*
-    else if (message.Contains("Duplicate share submitted")) // Rigel old bug
-    {
-     Console.ForegroundColor = ConsoleColor.Magenta;
-     Console.WriteLine(message);
-     Console.ForegroundColor = ConsoleColor.White;
+    /*
+        else if (message.Contains("Duplicate share submitted")) // Rigel old bug
+        {
+         Console.ForegroundColor = ConsoleColor.Magenta;
+         Console.WriteLine(message);
+         Console.ForegroundColor = ConsoleColor.White;
 
-     criticalEvent(sendingProcess);
-    }
-    else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero old bug (DNX)
-    {
-     Console.ForegroundColor = ConsoleColor.Magenta;
-     Console.WriteLine(message);
-     Console.ForegroundColor = ConsoleColor.White;
+         criticalEvent(sendingProcess);
+        }
+        else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero old bug (DNX)
+        {
+         Console.ForegroundColor = ConsoleColor.Magenta;
+         Console.WriteLine(message);
+         Console.ForegroundColor = ConsoleColor.White;
 
-     criticalEvent(sendingProcess);
-    }
-*/
+         criticalEvent(sendingProcess);
+        }
+    */
     else if (message.Contains("PL0: [FAILED]") || message.Contains("Mining will be paused until connection to the devfee pool can be established")) // SRBMiner-Multi bugs
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
@@ -2897,6 +2993,12 @@ namespace PoolWatcher
   [HandleProcessCorruptedStateExceptions, SecurityCritical]
   static void Main(string[] args)
   {
+   try
+   {
+    Console.SetBufferSize(Console.BufferWidth, Int16.MaxValue - 1);
+   }
+   catch { }
+
    ConsoleWindow.QuickEditMode(false);
 
    start_task.Start();
