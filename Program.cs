@@ -693,10 +693,13 @@ namespace PoolWatcher
          {
           if (curr_process != null)
           {
-           if (Program.ru_lang)
-            Console.WriteLine("Контролируемый процесс завершился или неожиданно перезапустился (out)");
-           else
-            Console.WriteLine("The controlled process ended or suddenly restarted (out)");
+           lock (lobj)
+           {
+            if (Program.ru_lang)
+             Console.WriteLine("Контроль COUT-потока майнера завершен");
+            else
+             Console.WriteLine("COUT-thread control finished");
+           }
           }
           break;
          }
@@ -708,12 +711,15 @@ namespace PoolWatcher
        }
        catch (Exception ex)
        {
-        Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+        lock (lobj)
+        {
+         Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
 
-        if (Program.ru_lang)
-         Console.WriteLine("Убиваем зависший процесс");
-        else
-         Console.WriteLine("Kill hung process");
+         if (Program.ru_lang)
+          Console.WriteLine("Убиваем зависший процесс");
+         else
+          Console.WriteLine("Kill hung process");
+        }
 
         criticalEvent(curr_process);
        }
@@ -793,10 +799,13 @@ namespace PoolWatcher
          {
           if (curr_process != null)
           {
-           if (Program.ru_lang)
-            Console.WriteLine("Контролируемый процесс завершился или неожиданно перезапустился (err)");
-           else
-            Console.WriteLine("The controlled process ended or suddenly restarted (err)");
+           lock (lobj)
+           {
+            if (Program.ru_lang)
+             Console.WriteLine("Контроль CERR-потока майнера завершен");
+            else
+             Console.WriteLine("CERR-thread control finished");
+           }
           }
           break;
          }
@@ -808,12 +817,15 @@ namespace PoolWatcher
        }
        catch (Exception ex)
        {
-        Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+        lock (lobj)
+        {
+         Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
 
-        if (Program.ru_lang)
-         Console.WriteLine("Убиваем зависший процесс");
-        else
-         Console.WriteLine("Kill hung process");
+         if (Program.ru_lang)
+          Console.WriteLine("Убиваем зависший процесс");
+         else
+          Console.WriteLine("Kill hung process");
+        }
 
         criticalEvent(curr_process);
        }
