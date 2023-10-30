@@ -661,9 +661,16 @@ namespace PoolWatcher
 
           if (t_wait_result == true) break;
 
-          if (curr_process == null || dt > thead_dt)
+          if (dt > thead_dt)
           {
            t_wait_result = false;
+           Console.WriteLine("OUT Exit 0");
+           break;
+          }
+          else if (curr_process == null)
+          {
+           t_wait_result = false;
+           Console.WriteLine("OUT Exit 1");
            break;
           }
           else
@@ -673,12 +680,14 @@ namespace PoolWatcher
             if (curr_process.HasExited)
             {
              t_wait_result = false;
+             Console.WriteLine("OUT Exit 2");
              break;
             }
            }
            catch
            {
             t_wait_result = false;
+            Console.WriteLine("OUT Exit 3");
             break;
            }
           }
@@ -690,10 +699,12 @@ namespace PoolWatcher
 
           if (output == null)
           {
+           Console.WriteLine("OUT Exit 4");
            break;
           }
           else if (curr_process == null)
           {
+           Console.WriteLine("OUT Exit 5");
            break;
           }
           else
@@ -702,10 +713,15 @@ namespace PoolWatcher
            {
             if (curr_process.HasExited)
             {
+             Console.WriteLine("OUT Exit 6");
              break;
             }
            }
-           catch { break; }
+           catch
+           {
+            Console.WriteLine("OUT Exit 7");
+            break;
+           }
           }
 
           if (!String.IsNullOrEmpty(output))
@@ -793,10 +809,18 @@ namespace PoolWatcher
 
            if (t_wait_result == true) break;
 
-           if (curr_process == null || !outThread.IsAlive || dt > thead_dt)
+           if (!outThread.IsAlive || dt > thead_dt)
            {
             t_wait_result = false;
             global_break = true;
+            Console.WriteLine("ERR Exit 0");
+            break;
+           }
+           else if (curr_process == null)
+           {
+            t_wait_result = false;
+            global_break = true;
+            Console.WriteLine("ERR Exit 1");
             break;
            }
            else
@@ -807,6 +831,7 @@ namespace PoolWatcher
              {
               t_wait_result = false;
               global_break = true;
+              Console.WriteLine("ERR Exit 2");
               break;
              }
             }
@@ -814,6 +839,7 @@ namespace PoolWatcher
             {
              t_wait_result = false;
              global_break = true;
+             Console.WriteLine("ERR Exit 3");
              break;
             }
            }
@@ -823,13 +849,20 @@ namespace PoolWatcher
           {
            output = t.Result;
 
-           if (output == null || !outThread.IsAlive || dt > thead_dt)
+           if (!outThread.IsAlive || dt > thead_dt)
            {
             global_break = true;
+            Console.WriteLine("ERR Exit 4");
+           }
+           else if (output == null)
+           {
+            global_break = true;
+            Console.WriteLine("ERR Exit 5");
            }
            else if (curr_process == null)
            {
             global_break = true;
+            Console.WriteLine("ERR Exit 6");
            }
            else
            {
@@ -838,9 +871,14 @@ namespace PoolWatcher
              if (curr_process.HasExited)
              {
               global_break = true;
+              Console.WriteLine("ERR Exit 7");
              }
             }
-            catch { global_break = true; }
+            catch
+            {
+             global_break = true;
+             Console.WriteLine("ERR Exit 8");
+            }
            }
 
            if (global_break) break;
@@ -852,7 +890,10 @@ namespace PoolWatcher
            }
           }
           else if (global_break)
+          {
+           Console.WriteLine("ERR Exit 9");
            break;
+          }
           else
           {
            lock (lobj)
@@ -875,6 +916,7 @@ namespace PoolWatcher
             Console.WriteLine("CERR-thread control finished");
           }
 
+          Console.WriteLine("ERR Exit 10");
           break;
          }
         }
