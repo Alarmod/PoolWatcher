@@ -621,10 +621,35 @@ namespace PoolWatcher
      {
       outThread = new Thread(() =>
       {
+       DateTime thead_dt = DateTime.Now;
+
        try
        {
         while (readerStdOut.BaseStream.CanRead)
         {
+         DateTime dt = DateTime.Now;
+         switch (pvar)
+         {
+          case ProcessVariant.Master:
+           {
+            dt = masterMinerProcessStartTime;
+
+            break;
+           }
+          case ProcessVariant.Slave0:
+           {
+            dt = slaveMinerProcess0StartTime;
+
+            break;
+           }
+          case ProcessVariant.Slave1:
+           {
+            dt = slaveMinerProcess1StartTime;
+
+            break;
+           }
+         }
+
          string output = null;
 
          Task<string> t = readerStdOut.ReadLineAsync();
@@ -636,7 +661,7 @@ namespace PoolWatcher
 
           if (t_wait_result == true) break;
 
-          if (curr_process == null)
+          if (curr_process == null || dt > thead_dt)
           {
            t_wait_result = false;
            break;
@@ -725,6 +750,8 @@ namespace PoolWatcher
 
       errThread = new Thread(() =>
       {
+       DateTime thead_dt = DateTime.Now;
+
        try
        {
         while (readerStdErr.BaseStream.CanRead)
@@ -736,6 +763,29 @@ namespace PoolWatcher
          bool global_break = false;
          while (true)
          {
+          DateTime dt = DateTime.Now;
+          switch (pvar)
+          {
+           case ProcessVariant.Master:
+            {
+             dt = masterMinerProcessStartTime;
+
+             break;
+            }
+           case ProcessVariant.Slave0:
+            {
+             dt = slaveMinerProcess0StartTime;
+
+             break;
+            }
+           case ProcessVariant.Slave1:
+            {
+             dt = slaveMinerProcess1StartTime;
+
+             break;
+            }
+          }
+
           bool t_wait_result = false;
           for (int i = 0; i < 100; i++)
           {
@@ -743,7 +793,7 @@ namespace PoolWatcher
 
            if (t_wait_result == true) break;
 
-           if (curr_process == null || !outThread.IsAlive)
+           if (curr_process == null || !outThread.IsAlive || dt > thead_dt)
            {
             t_wait_result = false;
             global_break = true;
@@ -773,7 +823,7 @@ namespace PoolWatcher
           {
            output = t.Result;
 
-           if (output == null || !outThread.IsAlive)
+           if (output == null || !outThread.IsAlive || dt > thead_dt)
            {
             global_break = true;
            }
@@ -2713,7 +2763,7 @@ namespace PoolWatcher
       else if (slaveMinerProcess1 != null)
        m = slaveMinerProcess1StartTime;
 
-      if ((n - m).TotalMinutes > 1.0)
+      if ((n - m).TotalMinutes > 5.0)
       {
        Console.ForegroundColor = ConsoleColor.Magenta;
        Console.WriteLine(message);
@@ -2727,7 +2777,7 @@ namespace PoolWatcher
       }
      }
     }
-    else if (message.Contains("DNS error: \"temporary failure\"") || message.Contains("DNS error: \"unknown node or service\"")) // глобальная ошибка DNS, скорее всего ничего не будет добаваться ничем
+    else if (message.Contains("DNS error: \"temporary failure\"") || message.Contains("DNS error: \"unknown node or service\"")) // глобальная ошибка DNS, скорее всего ничего не будет добываться ничем
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
