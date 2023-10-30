@@ -743,7 +743,7 @@ namespace PoolWatcher
 
            if (t_wait_result == true) break;
 
-           if (curr_process == null)
+           if (curr_process == null || !outThread.IsAlive)
            {
             t_wait_result = false;
             global_break = true;
@@ -773,7 +773,7 @@ namespace PoolWatcher
           {
            output = t.Result;
 
-           if (output == null)
+           if (output == null || !outThread.IsAlive)
            {
             global_break = true;
            }
@@ -2692,13 +2692,40 @@ namespace PoolWatcher
          criticalEvent(sendingProcess);
         }
     */
-    else if (message.Contains("PL0: [FAILED]") || message.Contains("Mining will be paused until connection to the devfee pool can be established") || (message.ToLower().Contains("mallob") && message.ToLower().Contains("error"))) // SRBMiner-Multi bugs
+    else if (message.Contains("PL0: [FAILED]") || message.Contains("Mining will be paused until connection to the devfee pool can be established")) // SRBMiner-Multi bugs
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
      Console.ForegroundColor = ConsoleColor.White;
 
      criticalEvent(sendingProcess);
+    }
+    else if (message.ToLower().Contains("mallob") && message.ToLower().Contains("error")) // SRBMiner-Multi bugs
+    {
+     if (masterMinerProcess != null || slaveMinerProcess0 != null || slaveMinerProcess1 != null)
+     {
+      DateTime n = DateTime.Now;
+      DateTime m = n;
+      if (masterMinerProcess != null)
+       m = masterMinerProcessStartTime;
+      else if (slaveMinerProcess0 != null)
+       m = slaveMinerProcess0StartTime;
+      else if (slaveMinerProcess1 != null)
+       m = slaveMinerProcess1StartTime;
+
+      if ((n - m).TotalMinutes > 1.0)
+      {
+       Console.ForegroundColor = ConsoleColor.Magenta;
+       Console.WriteLine(message);
+       Console.ForegroundColor = ConsoleColor.White;
+
+       criticalEvent(sendingProcess);
+      }
+      else
+      {
+       Console.WriteLine(message);
+      }
+     }
     }
     else if (message.Contains("DNS error: \"temporary failure\"") || message.Contains("DNS error: \"unknown node or service\"")) // глобальная ошибка DNS, скорее всего ничего не будет добаваться ничем
     {
