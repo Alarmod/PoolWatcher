@@ -2692,7 +2692,7 @@ namespace PoolWatcher
          criticalEvent(sendingProcess);
         }
     */
-    else if (message.Contains("PL0: [FAILED]") || message.Contains("Mining will be paused until connection to the devfee pool can be established")) // SRBMiner-Multi bugs
+    else if (message.Contains("PL0: [FAILED]") || message.Contains("Mining will be paused until connection to the devfee pool can be established") || (message.ToLower().Contains("mallob") && message.ToLower().Contains("error"))) // SRBMiner-Multi bugs
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
