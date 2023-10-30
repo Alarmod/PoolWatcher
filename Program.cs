@@ -661,7 +661,7 @@ namespace PoolWatcher
 
           if (t_wait_result == true) break;
 
-          if (dt > thead_dt)
+          if (dt >= thead_dt)
           {
            t_wait_result = false;
            Console.WriteLine("OUT Exit 0");
@@ -732,16 +732,16 @@ namespace PoolWatcher
          }
          else
          {
-          lock (lobj)
-          {
-           if (Program.ru_lang)
-            Console.WriteLine("Контроль COUT-потока майнера завершен");
-           else
-            Console.WriteLine("COUT-thread control finished");
-          }
-
           break;
          }
+        }
+
+        lock (lobj)
+        {
+         if (Program.ru_lang)
+          Console.WriteLine("Контроль COUT-потока майнера завершен");
+         else
+          Console.WriteLine("COUT-thread control finished");
         }
 
         readerStdOut.Close();
@@ -752,7 +752,7 @@ namespace PoolWatcher
        {
         lock (lobj)
         {
-         Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+         Console.WriteLine(ex.Message + Environment.NewLine + ex.StackTrace);
 
          if (Program.ru_lang)
           Console.WriteLine("Убиваем зависший процесс");
@@ -809,7 +809,7 @@ namespace PoolWatcher
 
            if (t_wait_result == true) break;
 
-           if (!outThread.IsAlive || dt > thead_dt)
+           if (!outThread.IsAlive || dt >= thead_dt)
            {
             t_wait_result = false;
             global_break = true;
@@ -849,7 +849,7 @@ namespace PoolWatcher
           {
            output = t.Result;
 
-           if (!outThread.IsAlive || dt > thead_dt)
+           if (!outThread.IsAlive || dt >= thead_dt)
            {
             global_break = true;
             Console.WriteLine("ERR Exit 4");
@@ -915,8 +915,6 @@ namespace PoolWatcher
            else
             Console.WriteLine("CERR-thread control finished");
           }
-
-          Console.WriteLine("ERR Exit 10");
           break;
          }
         }
@@ -929,7 +927,7 @@ namespace PoolWatcher
        {
         lock (lobj)
         {
-         Console.WriteLine(ex.Message + "\r\n" + ex.StackTrace);
+         Console.WriteLine(ex.Message + Environment.NewLine + ex.StackTrace);
 
          if (Program.ru_lang)
           Console.WriteLine("Убиваем зависший процесс");
