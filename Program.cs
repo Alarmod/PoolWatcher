@@ -3016,7 +3016,7 @@ namespace PoolWatcher
 
     Console.WriteLine("-k : Kill a pill before starting mining; variants: 0 or 1, default 0");
     Console.WriteLine("-w : Run without windows for external miners; variants: 0 or 1, default 1");
-    Console.WriteLine("-s : Anti-watchdog support; if you use a bat-file or lnk-shortcut, set his name as well as the name of the executable file; variants: 0 or 1, default 1");
+    Console.WriteLine("-s : Anti-watchdog support; if You use a bat-file or lnk-shortcut, set his name as well as the name of the executable file; variants: 0 or 1, default 1");
     Console.WriteLine("-o : Direct procedure for completing the mining process; variants: 0 or 1, default 1");
     Console.WriteLine("-e : Quit internal cycle after miner crash; variants: 0 or 1, default 1");
     Console.WriteLine("-d : Using a dummy-miner (named as dummy.exe), by default it starts with parameters '" + default_dummy_params + "', unless otherwise specified in the fifth line of the configuration file; variants: 0 or 1, default 0");
@@ -3059,15 +3059,15 @@ namespace PoolWatcher
     if (Program.ru_lang)
      Console.WriteLine("Предупреждение: если Вы используете SRBMiner-Multi, паузы между порциями сообщений могут достигать 2 и более минут, базовый период ожидания запуска майнера должен быть больше, иначе будут возникать коллизии на обработке информации");
     else
-     Console.WriteLine("Warning: if you use SRBMiner-Multi, the pauses between portions of messages can reach 2 or more minutes, the base period of waiting for the miner should be larger, otherwise conflicts will arise in the processing of information");
+     Console.WriteLine("Warning: if You use SRBMiner-Multi, the pauses between portions of messages can reach 2 or more minutes, the base period of waiting for the miner should be larger, otherwise conflicts will arise in the processing of information");
 
     Console.WriteLine();
    }
 
    if (Program.ru_lang)
-    Console.WriteLine("При запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"");
+    Console.WriteLine("Предупреждение: при запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"");
    else
-    Console.WriteLine("When starting batch-files, the monitoring of the following processes is turned off: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\"\"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" and \"taskkill\"");
+    Console.WriteLine("Warning: when starting bat-files, the monitoring of the following processes is turned off: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\"\"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" and \"taskkill\"");
 
    if (badSettings)
    {
@@ -3250,7 +3250,7 @@ namespace PoolWatcher
    {
     Console.WriteLine("Watcher version: " + version + Environment.NewLine);
     Console.WriteLine("To complete mining, use the closure of the main window with a cross, call \"Ctrl+C\" or function \"End the process tree\" in \"Task Manager\"!" + Environment.NewLine);
-    Console.WriteLine("\"Ctrl+C\" does not work in the case of launch Poolwatcher through \"start /B\"" + Environment.NewLine);
+    Console.WriteLine("\"Ctrl+C\" does not work in the case of launch PoolWatcher through \"start /B\"" + Environment.NewLine);
 
     Console.WriteLine("Donate wallets: ");
     PrintDonateWallets();
