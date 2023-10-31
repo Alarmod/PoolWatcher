@@ -3157,7 +3157,6 @@ namespace PoolWatcher
    SetErrorMode(ErrorModes.SEM_NOGPFAULTERRORBOX | ErrorModes.SEM_FAILCRITICALERRORS);
    SetThreadErrorMode(ErrorModes.SEM_NOGPFAULTERRORBOX | ErrorModes.SEM_FAILCRITICALERRORS, out ErrorModes dummyErrorMode);
 
-
    AppDomain.CurrentDomain.UnhandledException += delegate { mainKiller(); };
    AppDomain.CurrentDomain.ProcessExit += delegate { mainKiller(); };
    Console.CancelKeyPress += delegate { mainKiller(); };
@@ -3242,7 +3241,7 @@ namespace PoolWatcher
    {
     Console.WriteLine("Версия следилки: " + version + Environment.NewLine);
     Console.WriteLine("Для завершения добычи используйте закрытие основного окна с помощью крестика, вызов \"Ctrl+C\" или функцию \"Завершение дерева процессов\" в \"Диспетчере задач\"!" + Environment.NewLine);
-
+    Console.WriteLine("\"Ctrl+C\" не работает в случае запуска PoolWatcher через \"start /B\"" + Environment.NewLine);
     Console.WriteLine("Адреса для доната: ");
     PrintDonateWallets();
     Console.WriteLine();
@@ -3251,6 +3250,7 @@ namespace PoolWatcher
    {
     Console.WriteLine("Watcher version: " + version + Environment.NewLine);
     Console.WriteLine("To complete mining, use the closure of the main window with a cross, call \"Ctrl+C\" or function \"End the process tree\" in \"Task Manager\"!" + Environment.NewLine);
+    Console.WriteLine("\"Ctrl+C\" does not work in the case of launch Poolwatcher through \"start /B\"" + Environment.NewLine);
 
     Console.WriteLine("Donate wallets: ");
     PrintDonateWallets();
