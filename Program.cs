@@ -2813,7 +2813,9 @@ namespace PoolWatcher
       }
       else
       {
+       Console.ForegroundColor = ConsoleColor.Magenta;
        Console.WriteLine(message);
+       Console.ForegroundColor = ConsoleColor.White;
       }
      }
     }
@@ -3065,9 +3067,20 @@ namespace PoolWatcher
    }
 
    if (Program.ru_lang)
-    Console.WriteLine("Предупреждение: при запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"");
+    Console.WriteLine("Предупреждение: при запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"" + Environment.NewLine);
    else
-    Console.WriteLine("Warning: when starting bat-files, the monitoring of the following processes is turned off: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\"\"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" and \"taskkill\"");
+    Console.WriteLine("Warning: when starting bat-files, the monitoring of the following processes is turned off: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\"\"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" and \"taskkill\"" + Environment.NewLine);
+
+   if (Program.ru_lang)
+   {
+    Console.WriteLine("Для завершения добычи используйте закрытие основного окна с помощью крестика, вызов \"Ctrl+C\" или функцию \"Завершение дерева процессов\" в \"Диспетчере задач\"!");
+    Console.WriteLine("\"Ctrl+C\" не работает в случае запуска PoolWatcher через \"start /B\"");
+   }
+   else
+   {
+    Console.WriteLine("To complete mining, use the closure of the main window with a cross, call \"Ctrl+C\" or function \"End the process tree\" in \"Task Manager\"!");
+    Console.WriteLine("\"Ctrl+C\" does not work in the case of launch PoolWatcher through \"start /B\"");
+   }
 
    if (badSettings)
    {
@@ -3240,17 +3253,14 @@ namespace PoolWatcher
    if (Program.ru_lang)
    {
     Console.WriteLine("Версия следилки: " + version + Environment.NewLine);
-    Console.WriteLine("Для завершения добычи используйте закрытие основного окна с помощью крестика, вызов \"Ctrl+C\" или функцию \"Завершение дерева процессов\" в \"Диспетчере задач\"!" + Environment.NewLine);
-    Console.WriteLine("\"Ctrl+C\" не работает в случае запуска PoolWatcher через \"start /B\"" + Environment.NewLine);
+
     Console.WriteLine("Адреса для доната: ");
     PrintDonateWallets();
     Console.WriteLine();
    }
    else
    {
-    Console.WriteLine("Watcher version: " + version + Environment.NewLine);
-    Console.WriteLine("To complete mining, use the closure of the main window with a cross, call \"Ctrl+C\" or function \"End the process tree\" in \"Task Manager\"!" + Environment.NewLine);
-    Console.WriteLine("\"Ctrl+C\" does not work in the case of launch PoolWatcher through \"start /B\"" + Environment.NewLine);
+    Console.WriteLine("PoolWatcher version: " + version + Environment.NewLine);
 
     Console.WriteLine("Donate wallets: ");
     PrintDonateWallets();
