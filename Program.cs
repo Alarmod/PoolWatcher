@@ -47,8 +47,12 @@ namespace PoolWatcher
 
  public static class ConsoleWindow
  {
-  private static class NativeFunctions
+  public static class NativeFunctions
   {
+   [DllImport("user32.dll", SetLastError = true)]
+   [return: MarshalAs(UnmanagedType.Bool)]
+   public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, int uFlags);
+
    public enum StdHandle : int
    {
     STD_INPUT_HANDLE = -10,
@@ -886,7 +890,11 @@ namespace PoolWatcher
            if (!String.IsNullOrEmpty(output))
            {
             lock (lobj)
-            { ParseMessage(curr_process, output); }
+            {
+             ParseMessage(curr_process, output);
+
+             break;
+            }
            }
           }
           else if (global_break)
@@ -3153,6 +3161,14 @@ namespace PoolWatcher
   [HandleProcessCorruptedStateExceptions, SecurityCritical]
   static void Main(string[] args)
   {
+   if (false) // TOPMOST
+   {
+    const int HWND_TOPMOST = -1;
+    const int SWP_NOMOVE = 0x0002;
+    const int SWP_NOSIZE = 0x0001;
+    ConsoleWindow.NativeFunctions.SetWindowPos(Process.GetCurrentProcess().MainWindowHandle, new IntPtr(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+   }
+
    try
    {
     Console.SetBufferSize(Console.BufferWidth, Int16.MaxValue - 1);
