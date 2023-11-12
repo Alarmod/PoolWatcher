@@ -631,126 +631,129 @@ namespace PoolWatcher
        {
         while (readerStdOut.BaseStream.CanRead)
         {
-         DateTime dt = DateTime.Now;
-         switch (pvar)
-         {
-          case ProcessVariant.Master:
-           {
-            dt = masterMinerProcessStartTime;
-
-            break;
-           }
-          case ProcessVariant.Slave0:
-           {
-            dt = slaveMinerProcess0StartTime;
-
-            break;
-           }
-          case ProcessVariant.Slave1:
-           {
-            dt = slaveMinerProcess1StartTime;
-
-            break;
-           }
-         }
-
-         string output = null;
+         string output = String.Empty;
 
          Task<string> t = readerStdOut.ReadLineAsync();
 
-         bool t_wait_result = false;
-         for (int i = 0; i < 100; i++)
+         bool global_break = false;
+         while (true)
          {
-          t_wait_result = t.Wait(3000);
-
-          if (t_wait_result == true) break;
-
-          if (dt >= thead_dt)
+          DateTime dt = DateTime.Now;
+          switch (pvar)
           {
-           t_wait_result = false;
-           Console.WriteLine("OUT Exit 0");
-           break;
-          }
-          else if (curr_process == null)
-          {
-           t_wait_result = false;
-           Console.WriteLine("OUT Exit 1");
-           break;
-          }
-          else
-          {
-           try
-           {
-            if (curr_process.HasExited)
+           case ProcessVariant.Master:
             {
-             t_wait_result = false;
-             Console.WriteLine("OUT Exit 2");
+             dt = masterMinerProcessStartTime;
+
              break;
             }
-           }
-           catch
+           case ProcessVariant.Slave0:
+            {
+             dt = slaveMinerProcess0StartTime;
+
+             break;
+            }
+           case ProcessVariant.Slave1:
+            {
+             dt = slaveMinerProcess1StartTime;
+
+             break;
+            }
+          }
+
+          bool t_wait_result = false;
+          for (int i = 0; i < 100; i++)
+          {
+           t_wait_result = t.Wait(3000);
+
+           if ((dt - thead_dt).TotalMilliseconds > 2500)
            {
             t_wait_result = false;
-            Console.WriteLine("OUT Exit 3");
+            global_break = true;
+            Console.WriteLine("OUT Exit 0");
             break;
            }
-          }
-         }
-
-         if (t_wait_result)
-         {
-          output = t.Result;
-
-          if (output == null)
-          {
-           Console.WriteLine("OUT Exit 4");
-           break;
-          }
-          else if (curr_process == null)
-          {
-           Console.WriteLine("OUT Exit 5");
-           break;
-          }
-          else
-          {
-           try
+           else if (curr_process == null)
            {
-            if (curr_process.HasExited)
+            t_wait_result = false;
+            global_break = true;
+            Console.WriteLine("OUT Exit 1");
+            break;
+           }
+           else
+           {
+            try
             {
-             Console.WriteLine("OUT Exit 6");
+             if (curr_process.HasExited)
+             {
+              t_wait_result = false;
+              global_break = true;
+              Console.WriteLine("OUT Exit 2");
+              break;
+             }
+            }
+            catch
+            {
+             t_wait_result = false;
+             global_break = true;
+             Console.WriteLine("OUT Exit 3");
              break;
             }
            }
-           catch
-           {
-            Console.WriteLine("OUT Exit 7");
-            break;
-           }
+
+           if (t_wait_result == true) break;
           }
 
-          if (!String.IsNullOrEmpty(output))
+          if (global_break) break;
+
+          if (t_wait_result)
+          {
+           output = t.Result;
+
+           if (!String.IsNullOrEmpty(output))
+           {
+            lock (lobj)
+            {
+             ParseMessage(curr_process, output);
+
+             break;
+            }
+           }
+           else
+           {
+            Thread.Sleep(1000);
+           }
+          }
+          else
           {
            lock (lobj)
-           { ParseMessage(curr_process, output); }
+           {
+            if (Program.ru_lang)
+             Console.WriteLine("Контроль OUT-потока майнера продолжается");
+            else
+             Console.WriteLine("OUT-thread control online");
+           }
           }
          }
-         else
+
+         if (global_break)
          {
+          lock (lobj)
+          {
+           if (Program.ru_lang)
+            Console.WriteLine("Контроль OUT-потока майнера завершен");
+           else
+            Console.WriteLine("OUT-thread control finished");
+          }
           break;
          }
         }
 
-        lock (lobj)
-        {
-         if (Program.ru_lang)
-          Console.WriteLine("Контроль COUT-потока майнера завершен");
-         else
-          Console.WriteLine("COUT-thread control finished");
-        }
-
         readerStdOut.Close();
         if (shStdOutRead.IsClosed == false)
+        {
          shStdOutRead.Close();
+        }
        }
        catch (Exception ex)
        {
@@ -776,7 +779,7 @@ namespace PoolWatcher
        {
         while (readerStdErr.BaseStream.CanRead)
         {
-         string output = null;
+         string output = String.Empty;
 
          Task<string> t = readerStdErr.ReadLineAsync();
 
@@ -811,9 +814,7 @@ namespace PoolWatcher
           {
            t_wait_result = t.Wait(3000);
 
-           if (t_wait_result == true) break;
-
-           if (!outThread.IsAlive || dt >= thead_dt)
+           if ((dt - thead_dt).TotalMilliseconds > 2500)
            {
             t_wait_result = false;
             global_break = true;
@@ -847,45 +848,15 @@ namespace PoolWatcher
              break;
             }
            }
+
+           if (t_wait_result == true) break;
           }
+
+          if (global_break) break;
 
           if (t_wait_result)
           {
            output = t.Result;
-
-           if (!outThread.IsAlive || dt >= thead_dt)
-           {
-            global_break = true;
-            Console.WriteLine("ERR Exit 4");
-           }
-           else if (output == null)
-           {
-            global_break = true;
-            Console.WriteLine("ERR Exit 5");
-           }
-           else if (curr_process == null)
-           {
-            global_break = true;
-            Console.WriteLine("ERR Exit 6");
-           }
-           else
-           {
-            try
-            {
-             if (curr_process.HasExited)
-             {
-              global_break = true;
-              Console.WriteLine("ERR Exit 7");
-             }
-            }
-            catch
-            {
-             global_break = true;
-             Console.WriteLine("ERR Exit 8");
-            }
-           }
-
-           if (global_break) break;
 
            if (!String.IsNullOrEmpty(output))
            {
@@ -896,11 +867,10 @@ namespace PoolWatcher
              break;
             }
            }
-          }
-          else if (global_break)
-          {
-           Console.WriteLine("ERR Exit 9");
-           break;
+           else
+           {
+            Thread.Sleep(1000);
+           }
           }
           else
           {
@@ -1545,7 +1515,16 @@ namespace PoolWatcher
       asyncThread.IsBackground = true;
       asyncThread.Start();
 
-      if (curr_process != null) curr_process.WaitForExit();
+      while (curr_process != null)
+      {
+       curr_process.WaitForExit(1000);
+
+       if (curr_process.HasExited) break;
+       else if (options.without_external_windows == 1)
+       {
+        if (!outThread.IsAlive && !errThread.IsAlive) break;
+       }
+      }
 
       if (Program.ru_lang)
        Console.WriteLine("Основные процессы сценария добычи запущены");
@@ -1554,8 +1533,16 @@ namespace PoolWatcher
      }
      else
      {
-      if (curr_process != null)
-       curr_process.WaitForExit();
+      while (curr_process != null)
+      {
+       curr_process.WaitForExit(1000);
+
+       if (curr_process.HasExited) break;
+       else if (options.without_external_windows == 1)
+       {
+        if (!outThread.IsAlive && !errThread.IsAlive) break;
+       }
+      }
      }
 
      switch (pvar)
@@ -1586,6 +1573,11 @@ namespace PoolWatcher
 
       errThread.Join();
      }
+
+     if (Program.ru_lang)
+      Console.WriteLine("Треды отслеживания сообщений завершили работу");
+     else
+      Console.WriteLine("The tracking threads for messages are finished own work");
 
      if (isBatFile) asyncThread.Join();
 
