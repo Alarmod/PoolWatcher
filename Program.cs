@@ -2887,8 +2887,8 @@ namespace PoolWatcher
      Console.WriteLine(message);
      Console.ForegroundColor = ConsoleColor.White;
     }
-    // xmrig, wildrig and SRB
-    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")) || message.Contains("Run time"))
+    // xmrig, wildrig, SRB and OneZero
+    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")) || message.Contains("Run time") || message.Contains("Uptime:"))
     {
      if (mainThread_enabled)
      {
@@ -2948,7 +2948,7 @@ namespace PoolWatcher
        }
        else
        {
-        if (message.Contains("Run time"))
+        if (message.Contains("Run time") || message.Contains("Uptime:"))
          Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
         else if (message.Contains("15m:") && message.Contains("Ignored:"))
          Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
