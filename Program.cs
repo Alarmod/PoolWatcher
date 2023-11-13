@@ -4,6 +4,7 @@ using CommandLine;
 using IWshRuntimeLibrary;
 using Microsoft.Win32.SafeHandles;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -3070,6 +3071,11 @@ namespace PoolWatcher
     Console.WriteLine("Предупреждение: при запуске батников выключен мониторинг следующих процессов: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\", \"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" и \"taskkill\"" + Environment.NewLine);
    else
     Console.WriteLine("Warning: when starting bat-files, the monitoring of the following processes is turned off: \"OhGodAnETHlargementPill-r2.exe\", \"sleep\", \"timeout\"\"MSIAfterburner.exe\", \"curl\", \"tasklist\", \"find\", \"powershell\", \"start\", \"cd\" and \"taskkill\"" + Environment.NewLine);
+
+   if (Program.ru_lang)
+    Console.WriteLine("Предупреждение: запуск PoolWatcher с привязкой к консоли (например, в случае запуска через \"start /B /W\") в редких случаях может привести к сокрытию основного окна из-за ошибки BEX64 у процесса conhost.exe (ошибка Windows), рекомендуется запускать PoolWatcher так, чтобы у него было собственное окно" + Environment.NewLine);
+   else
+    Console.WriteLine("Warning: Poolwatcher attached launch to the console (for example, in the case of launch through \"start /B /W\") in rare cases can lead to hiding the main window due to the BEX64 error for the conhost.exe process (Windows error), it is recommended to run the PoolWatcher so that he has his own window" + Environment.NewLine);
 
    if (Program.ru_lang)
    {
