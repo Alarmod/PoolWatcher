@@ -2881,14 +2881,22 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
+    else if (message.Contains("karlsen_miner::miner] Closing miner"))
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
+
+     criticalEvent(sendingProcess);
+    }
     else if (message.Contains("Stratum: No shares") || message.ToLower(CultureInfo.CurrentCulture).Contains("reconnect"))
     {
      Console.ForegroundColor = ConsoleColor.Red;
      Console.WriteLine(message);
      Console.ForegroundColor = ConsoleColor.White;
     }
-    // xmrig, wildrig, SRB and OneZero
-    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")) || message.Contains("Run time") || message.Contains("Uptime:"))
+    // xmrig, wildrig, SRB, OneZero and karlsen_miner
+    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")) || message.Contains("Run time") || message.Contains("Uptime:") || message.Contains("karlsen_miner::miner] Current hashrate is"))
     {
      if (mainThread_enabled)
      {
@@ -2952,6 +2960,8 @@ namespace PoolWatcher
          Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
         else if (message.Contains("15m:") && message.Contains("Ignored:"))
          Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
+        else if (message.Contains("karlsen_miner::miner] Current hashrate is"))
+         Console.WriteLine(message + Environment.NewLine + "                                                  Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
         else
          Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
        }
@@ -2962,7 +2972,7 @@ namespace PoolWatcher
       Console.ForegroundColor = ConsoleColor.White;
       Console.WriteLine(message);
      }
-    } // Проверка на "Accepted:" добавлена для работы с новым wildrig
+    } // Проверка на accepted
     else if ((message.ToLower(CultureInfo.CurrentCulture).Contains("accepted") && !message.Contains("Accepted:")) || message.Contains("[ OK ]") || message.Contains("[ BLOCK ]") || (message.Contains("diff") && message.Contains("[B/A/T]")))
     {
      Console.ForegroundColor = ConsoleColor.DarkGreen;
