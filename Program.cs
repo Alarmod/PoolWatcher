@@ -1,4 +1,5 @@
 ﻿//#define kill_msi_after_exec
+//#define TOPMOST
 
 using CommandLine;
 using IWshRuntimeLibrary;
@@ -2881,7 +2882,7 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-    else if (message.Contains("karlsen_miner::miner] Closing miner"))
+    else if (message.Contains("karlsen_miner::miner] Closing miner") || message.Contains("karlsen_miner::miner] Workers stalled or crashed"))
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
@@ -3175,13 +3176,14 @@ namespace PoolWatcher
   [HandleProcessCorruptedStateExceptions, SecurityCritical]
   static void Main(string[] args)
   {
-   if (false) // TOPMOST
+#if TOPMOST
    {
     const int HWND_TOPMOST = -1;
     const int SWP_NOMOVE = 0x0002;
     const int SWP_NOSIZE = 0x0001;
     ConsoleWindow.NativeFunctions.SetWindowPos(Process.GetCurrentProcess().MainWindowHandle, new IntPtr(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
    }
+#endif
 
    try
    {
