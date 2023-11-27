@@ -2882,7 +2882,7 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-    else if (message.Contains("karlsen_miner::miner] Closing miner") || message.Contains("karlsen_miner::miner] Workers stalled or crashed"))
+    else if (message.Contains("karlsen_miner::miner] Closing miner") || message.Contains("karlsen_miner::miner] Workers stalled or crashed") || message.Contains("karlsen_miner] Client closed, reconnecting"))
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
