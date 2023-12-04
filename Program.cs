@@ -2882,7 +2882,7 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-    else if (message.Contains("karlsen_miner::miner] Closing miner") || message.Contains("karlsen_miner::miner] Workers stalled or crashed") || message.Contains("karlsen_miner] Client closed, reconnecting"))
+    else if (message.Contains("_miner::miner] Closing miner") || message.Contains("_miner::miner] Workers stalled or crashed") || message.Contains("_miner] Client closed, reconnecting"))
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
@@ -2896,8 +2896,8 @@ namespace PoolWatcher
      Console.WriteLine(message);
      Console.ForegroundColor = ConsoleColor.White;
     }
-    // xmrig, wildrig, SRB, OneZero and karlsen_miner
-    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")) || message.Contains("Run time") || message.Contains("Uptime:") || message.Contains("karlsen_miner::miner] Current hashrate is"))
+    // xmrig, wildrig, SRB, OneZero and (karlsen_miner or pyrin_miner)
+    else if (message.Contains("speed 10s/60s/15m") || message.Contains("hashrate: 10s:") || (message.Contains("15m:") && message.Contains("Ignored:")) || message.Contains("Run time") || message.Contains("Uptime:") || message.Contains("_miner::miner] Current hashrate is"))
     {
      if (mainThread_enabled)
      {
@@ -2961,7 +2961,7 @@ namespace PoolWatcher
          Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
         else if (message.Contains("15m:") && message.Contains("Ignored:"))
          Console.WriteLine(message + Environment.NewLine + " Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
-        else if (message.Contains("karlsen_miner::miner] Current hashrate is"))
+        else if (message.Contains("_miner::miner] Current hashrate is"))
          Console.WriteLine(message + Environment.NewLine + "                                                  Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
         else
          Console.WriteLine(message + ", со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
@@ -2974,7 +2974,7 @@ namespace PoolWatcher
       Console.WriteLine(message);
      }
     } // Проверка на accepted
-    else if ((message.ToLower(CultureInfo.CurrentCulture).Contains("accepted") && !message.Contains("Accepted:")) || message.Contains("[ OK ]") || message.Contains("[ BLOCK ]") || (message.Contains("diff") && message.Contains("[B/A/T]")))
+    else if ((message.ToLower(CultureInfo.CurrentCulture).Contains("accepted") && !message.Contains("Accepted:")) || message.Contains("[ OK ]") || message.Contains("Found a block") || message.Contains("[ BLOCK ]") || (message.Contains("diff") && message.Contains("[B/A/T]")))
     {
      Console.ForegroundColor = ConsoleColor.DarkGreen;
      Console.WriteLine(message);
