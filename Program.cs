@@ -2882,13 +2882,19 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-    else if (message.Contains("_miner::miner] Closing miner") || message.Contains("_miner::miner] Workers stalled or crashed") || message.Contains("_miner] Client closed, reconnecting"))
+    else if (message.Contains("_miner::miner] Closing miner") || message.Contains("_miner] Client closed, reconnecting"))
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
      Console.WriteLine(message);
      Console.ForegroundColor = ConsoleColor.White;
 
      criticalEvent(sendingProcess);
+    }
+    else if (message.Contains("_miner::miner] Workers stalled or crashed"))
+    {
+     Console.ForegroundColor = ConsoleColor.Magenta;
+     Console.WriteLine(message);
+     Console.ForegroundColor = ConsoleColor.White;
     }
     else if (message.Contains("Stratum: No shares") || message.ToLower(CultureInfo.CurrentCulture).Contains("reconnect"))
     {
