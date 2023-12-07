@@ -3231,7 +3231,13 @@ namespace PoolWatcher
 
    Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
 
-   string path_to_config_file = Path.ChangeExtension(System.AppDomain.CurrentDomain.FriendlyName, ".config");
+   string path_to_config_file;
+   
+   path_to_config_file = Path.ChangeExtension(System.AppDomain.CurrentDomain.FriendlyName, ".bmp");
+   if (!System.IO.File.Exists(path_to_config_file)) path_to_config_file = Path.ChangeExtension(System.AppDomain.CurrentDomain.FriendlyName, ".ico");
+   if (!System.IO.File.Exists(path_to_config_file)) path_to_config_file = Path.ChangeExtension(System.AppDomain.CurrentDomain.FriendlyName, ".jpg");
+   if (!System.IO.File.Exists(path_to_config_file)) path_to_config_file = Path.ChangeExtension(System.AppDomain.CurrentDomain.FriendlyName, ".config");
+
    config_lines = new string[5];
    config_lines[3] = defaultPool + ":" + defaultPort;
    config_lines[4] = default_dummy_params;
@@ -3293,9 +3299,9 @@ namespace PoolWatcher
    else
    {
     if (Program.ru_lang)
-     Console.WriteLine("Файл '" + path_to_config_file + "' не найден!");
+     Console.WriteLine("Конфигационный файл не найден!");
     else
-     Console.WriteLine("File '" + path_to_config_file + "' not founded!");
+     Console.WriteLine("Сonfiguration file was not found!");
 
     Environment.Exit(0);
    }
