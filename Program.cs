@@ -147,6 +147,9 @@ namespace PoolWatcher
   [Option('v', "ban_timeout", Default = 30, Required = false)]
   public int ban_timeout { get; set; }
 
+  [Option('h', "hide_miner_messages", Default = 0, Required = false)]
+  public int hide_miner_messages { get; set; }
+
   [Option('m', "ban_or_restart_no_shares_event", Default = 1, Required = false)]
   public int ban_or_restart_no_shares_event { get; set; }
  }
@@ -2720,21 +2723,30 @@ namespace PoolWatcher
 
     if (message.Contains("new job") || (message.Contains("diff") && !message.Contains("[B/A/T]") && !message.Contains("accepted")))
     {
-     Console.ForegroundColor = ConsoleColor.DarkCyan;
-     Console.WriteLine(message);
-     Console.ForegroundColor = ConsoleColor.White;
+     if (options.hide_miner_messages == 0)
+     {
+      Console.ForegroundColor = ConsoleColor.DarkCyan;
+      Console.WriteLine(message);
+      Console.ForegroundColor = ConsoleColor.White;
+     }
     }
     else if (message.Contains("profit:"))
     {
-     Console.ForegroundColor = ConsoleColor.Red;
-     Console.WriteLine(message);
-     Console.ForegroundColor = ConsoleColor.White;
+     if (options.hide_miner_messages == 0)
+     {
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine(message);
+      Console.ForegroundColor = ConsoleColor.White;
+     }
     }
     else if (message.Contains("Total Speed") || message.Contains("Total:"))
     {
-     Console.ForegroundColor = ConsoleColor.DarkYellow;
-     Console.WriteLine(message);
-     Console.ForegroundColor = ConsoleColor.White;
+     if (options.hide_miner_messages == 0)
+     {
+      Console.ForegroundColor = ConsoleColor.DarkYellow;
+      Console.WriteLine(message);
+      Console.ForegroundColor = ConsoleColor.White;
+     }
     }
     else if (message.Contains("TCP Client"))
     {
@@ -2751,9 +2763,12 @@ namespace PoolWatcher
     } // xmrig and NIM
     else if ((message.Contains("speed 10s/60s/15m 0.0 0.0") || message.Contains("speed 10s/60s/15m 0 0")) || message.Contains("GPU#0 0 H/s") || message.Contains("GPU#1 0 H/s") || message.Contains("GPU#2 0 H/s") || message.Contains("GPU#3 0 H/s") || message.Contains("GPU#4 0 H/s") || message.Contains("GPU#5 0 H/s") || message.Contains("GPU#6 0 H/s") || message.Contains("GPU#7 0 H/s") || message.Contains("GPU#8 0 H/s") || message.Contains("GPU#9 0 H/s"))
     {
-     Console.ForegroundColor = ConsoleColor.Magenta;
-     Console.WriteLine(message);
-     Console.ForegroundColor = ConsoleColor.White;
+     if (options.hide_miner_messages == 0)
+     {
+      Console.ForegroundColor = ConsoleColor.Magenta;
+      Console.WriteLine(message);
+      Console.ForegroundColor = ConsoleColor.White;
+     }
 
      criticalEvent(sendingProcess);
     }
@@ -2765,24 +2780,6 @@ namespace PoolWatcher
 
      criticalEvent(sendingProcess);
     }
-    /*
-        else if (message.Contains("Duplicate share submitted")) // Rigel old bug
-        {
-         Console.ForegroundColor = ConsoleColor.Magenta;
-         Console.WriteLine(message);
-         Console.ForegroundColor = ConsoleColor.White;
-
-         criticalEvent(sendingProcess);
-        }
-        else if (message.Contains("Share rejected: Invalid share Err#414")) // OneZero old bug (DNX)
-        {
-         Console.ForegroundColor = ConsoleColor.Magenta;
-         Console.WriteLine(message);
-         Console.ForegroundColor = ConsoleColor.White;
-
-         criticalEvent(sendingProcess);
-        }
-    */
     else if (message.Contains("PL0: [FAILED]") || message.Contains("Mining will be paused until connection to the devfee pool can be established")) // SRBMiner-Multi bugs
     {
      Console.ForegroundColor = ConsoleColor.Magenta;
@@ -2806,13 +2803,16 @@ namespace PoolWatcher
 
       if ((n - m).TotalMinutes > 5.0)
       {
-       Console.ForegroundColor = ConsoleColor.Magenta;
-       Console.WriteLine(message);
-       Console.ForegroundColor = ConsoleColor.White;
+       if (options.hide_miner_messages == 0)
+       {
+        Console.ForegroundColor = ConsoleColor.Magenta;
+        Console.WriteLine(message);
+        Console.ForegroundColor = ConsoleColor.White;
+       }
 
        criticalEvent(sendingProcess);
       }
-      else
+      else if (options.hide_miner_messages == 0)
       {
        Console.ForegroundColor = ConsoleColor.Magenta;
        Console.WriteLine(message);
@@ -2961,7 +2961,7 @@ namespace PoolWatcher
          criticalEvent(sendingProcess);
         }
        }
-       else
+       else if (options.hide_miner_messages == 0)
        {
         if (message.Contains("Run time") || message.Contains("Uptime:"))
          Console.WriteLine(message + Environment.NewLine + "                      Со времени последнего критического для добычи события/шары прошло '{0}' секунд", span.ToString("0.000").Replace(',', '.'));
@@ -2976,15 +2976,21 @@ namespace PoolWatcher
      }
      else
      {
-      Console.ForegroundColor = ConsoleColor.White;
-      Console.WriteLine(message);
+      if (options.hide_miner_messages == 0)
+      {
+       Console.ForegroundColor = ConsoleColor.White;
+       Console.WriteLine(message);
+      }
      }
     } // Проверка на accepted
     else if ((message.ToLower(CultureInfo.CurrentCulture).Contains("accepted") && !message.Contains("Accepted:")) || message.Contains("[ OK ]") || message.Contains("Found a block") || message.Contains("[ BLOCK ]") || (message.Contains("diff") && message.Contains("[B/A/T]")))
     {
-     Console.ForegroundColor = ConsoleColor.DarkGreen;
-     Console.WriteLine(message);
-     Console.ForegroundColor = ConsoleColor.White;
+     if (options.hide_miner_messages == 0)
+     {
+      Console.ForegroundColor = ConsoleColor.DarkGreen;
+      Console.WriteLine(message);
+      Console.ForegroundColor = ConsoleColor.White;
+     }
 
      if (mainThread_enabled)
      {
@@ -2998,8 +3004,11 @@ namespace PoolWatcher
     }
     else
     {
-     Console.ForegroundColor = ConsoleColor.White;
-     Console.WriteLine(message);
+     if (options.hide_miner_messages == 0)
+     {
+      Console.ForegroundColor = ConsoleColor.White;
+      Console.WriteLine(message);
+     }
     }
    }
   }
@@ -3025,9 +3034,10 @@ namespace PoolWatcher
     Console.WriteLine("-q : Базовый период ожидания первой шары, по умолчанию " + Options.default_share_wait_timeout_value + " секунд");
     Console.WriteLine("-i : Игнорировать сообщения вида 'no active pools'; значения: 0 или 1, по умолчанию 1");
     Console.WriteLine("-v : Время бана пула (минут); значения: по умолчанию 30 минут");
+    Console.WriteLine("-h : Скрывать сообщения от майнера; значения: 0 или 1, по умолчанию 0");
     Console.WriteLine("-m : Поведение при наступлении события \"долгое время нет шар\"; значения: 0 (бан) или 1 (рестарт майнера), по умолчанию 1" + Environment.NewLine + Environment.NewLine);
 
-    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -q " + Options.default_share_wait_timeout_value + " -i 1 -v 30 -m 1");
+    Console.WriteLine("Пример: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -q " + Options.default_share_wait_timeout_value + " -i 1 -v 30 -h 0 -m 1");
    }
    else
    {
@@ -3043,9 +3053,10 @@ namespace PoolWatcher
     Console.WriteLine("-q : Base waiting period for the first share, default " + Options.default_share_wait_timeout_value + " seconds");
     Console.WriteLine("-i : Ignore messages like 'no active pools'; variants: 0 or 1, default 1");
     Console.WriteLine("-v : Ban-time for the pool (minutes), default 30 minutes");
+    Console.WriteLine("-h : Hide miner messages; variants: 0 or 1, default 0");
     Console.WriteLine("-m : Behavior upon occurrence of an event \"For a long time there is no shares\"; variants: 0 (ban) or 1 (miner restart), by default 1" + Environment.NewLine + Environment.NewLine);
 
-    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -q " + Options.default_share_wait_timeout_value + " -i 1 -v 30 -m 1");
+    Console.WriteLine("Example: " + AppDomain.CurrentDomain.FriendlyName + " -k 0 -w 1 -s 1 -o 1 -e 1 -d -p " + Options.default_wait_timeout_value + " -q " + Options.default_share_wait_timeout_value + " -i 1 -v 30 -h 0 -m 1");
    }
    Console.WriteLine();
 
@@ -3062,6 +3073,7 @@ namespace PoolWatcher
    else if (options.share_wait_timeout < 0 || options.share_wait_timeout > 1000000) badSettings = true;
    else if (options.ignore_no_active_pools_message < 0 || options.ignore_no_active_pools_message > 1) badSettings = true;
    else if (options.ban_timeout < 0 || options.ban_timeout > 1000000) badSettings = true;
+   else if (options.hide_miner_messages < 0 || options.hide_miner_messages > 1000000) badSettings = true;
    else if (options.ban_or_restart_no_shares_event < 0 || options.ban_or_restart_no_shares_event > 1) badSettings = true;
 
    if (options.without_external_windows == 0)
