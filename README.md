@@ -23,10 +23,12 @@ It program for the mining pools monitoring and mining support.
 
 -v : Ban-time for the pool (minutes), default 30 minutes
 
+-h : Hide miner messages; variants: 0 or 1, default 0
+
 -m : Behavior upon occurrence of an event "For a long time there is no shares"; variants: 0 (ban) or 1 (miner restart), by default 1
 
 # Additional info:
-Example: PoolWatcher.exe -k 0 -w 1 -s 1 -o 1 -e 1 -d -p 360 -q 1200 -i 1 -v 30 -m 1
+Example: PoolWatcher.exe -k 0 -w 1 -s 1 -o 1 -e 1 -d -p 360 -q 1200 -i 1 -v 30 -h 0 -m 1
 
 Warning: if you use SRBMiner-Multi, the pauses between portions of messages can reach 2 or more minutes, the base period of waiting for the miner should be larger, otherwise conflicts will arise in the processing of information
 
