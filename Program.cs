@@ -3299,7 +3299,7 @@ namespace PoolWatcher
    else
    {
     if (Program.ru_lang)
-     Console.WriteLine("Конфигационный файл не найден!");
+     Console.WriteLine("Конфигурационный файл не найден!");
     else
      Console.WriteLine("Сonfiguration file was not found!");
 
